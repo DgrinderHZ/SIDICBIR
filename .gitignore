@@ -1,0 +1,6 @@
+.idea/
+.vscode/
+__pycache__/
+coil-100/
+guivenv/
+images/
