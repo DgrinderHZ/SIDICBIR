@@ -4,3 +4,5 @@ __pycache__/
 coil-100/
 guivenv/
 images/
+default/
+test/

@@ -13,7 +13,7 @@ class ImageManager:
         ##############################
         ########### Mtree ############
         ##############################
-        self.mtree = MTree(distance, max_nodes=4)
+        self.mtree = MTree(distance, max_nodes=8)
         self.imageList = []
         self.photoList = []
         self.xmax = 0
@@ -26,7 +26,6 @@ class ImageManager:
         ####### Image Database #######
         ##############################
         # Add each image (for evaluation) into a list (from sample code)
-        print(imgFolder)
         for infile in glob.glob(imgFolder):
             im = Image.open(infile)
             pt = ImageTk.PhotoImage(im)
@@ -40,7 +39,7 @@ class ImageManager:
                 self.y = y
             x = imSize[0] // 3
             y = imSize[1] // 3
-            resized = im.resize((x, y), Image.ANTIALIAS)
+            resized = im.resize((84, 96), Image.ANTIALIAS)
             photo = ImageTk.PhotoImage(resized)
 
             # Find the max height and width of the set of pics.
