@@ -51,7 +51,7 @@ class CBIR(Frame):
 
         # Database control
         self.lbl_dbQueryPanel = Label(self.dbQueryPanel, 
-            text="Options: Requête et Bases de données",
+            text="OPTIONS: REQUETE ET BASES DE DONNEES",
             fg="black",
             width=50,
             height=2,
@@ -150,7 +150,7 @@ class CBIR(Frame):
         #___________________________________________________________________________#
     
         self.lbl_descriptrs = Label(self.dbQueryPanel, 
-            text="Options: Choix de descripteur",
+            text="OPTIONS: CHOIX DE DESCRIPTEUR",
             fg="black",
             width=50,
             height=2,
@@ -171,7 +171,7 @@ class CBIR(Frame):
         #___________________________________________________________________________#
 
         self.lbl_distances = Label(self.dbQueryPanel, 
-            text="Options: Choix de la mesure de similarité",
+            text="OPTIONS: CHOIX DE LA MESURE DE SIMILARITE",
             fg="black",
             width=50,
             height=2,
@@ -193,7 +193,7 @@ class CBIR(Frame):
         #__________________________________________________________________________________
 
         self.lbl_search = Label(self.dbQueryPanel, 
-            text="Options: Recherche M-tree",
+            text="OPTIONS: RECHERCHE M-TREE",
             fg="black",
             width=50,
             height=2,
@@ -313,7 +313,10 @@ class CBIR(Frame):
         elif self.var_desciptor.get() == '          Interesect        ':
             DIST = Distance.intersect
        
-        self.imgManager = ImageManager(self.root, DESC, DIST, self.folder_path.get()+"/*.jpg")
+        withIndexBase = False
+        if self.var_choix.get() == "Dossier CSVs : ":
+            withIndexBase = True
+        self.imgManager = ImageManager(self.root, DESC, DIST, self.folder_path.get()+"/*.jpg", withIndexBase)
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()

@@ -6,7 +6,7 @@ import cv2
 
 # Pixel Info class (from sample code)
 class ImageManager:
-    def __init__(self, root, descriptor, distance, imgFolder):
+    def __init__(self, root, descriptor, distance, imgFolder, withIndexBase=False):
         self.root = root
         self.descriptor = descriptor
         self.distance = distance
@@ -26,6 +26,8 @@ class ImageManager:
         ####### Image Database #######
         ##############################
         # Add each image (for evaluation) into a list (from sample code)
+        if withIndexBase:
+            imgFolder = 'images/*.jpg'
         for infile in glob.glob(imgFolder):
             im = Image.open(infile)
             pt = ImageTk.PhotoImage(im)
@@ -54,17 +56,17 @@ class ImageManager:
         # TODO: DONE  reading the saved descriptors
         # look for saved values
         #if os.path.isfile('indexBase.txt'):
-        tmp = False
-        if tmp:
-            indexes = open('indexBase.txt', 'r')
+        if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            for line in indexes:
-                line = line.replace("[", "").replace("]", "").replace("(", "").replace(")", "").split(",")
-                filename = line[0]
-                avgs = [float(x) for x in line[1:]]
-                # TODO: Add to M tree
-                self.addObjectsToTree([filename, avgs])
-                print(".", end= " ")
+            for index in glob.glob('indexBase/*.txt'):
+                signature = open(index, 'r')
+                for line in signature:
+                    line = line.replace("[", "").replace("]", "").replace("(", "").replace(")", "").split(",")
+                    filename = line[0]
+                    avgs = [float(x) for x in line[1:]]
+                    # TODO: Add to M tree
+                    self.addObjectsToTree([filename, avgs])
+                    print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
 
         # If not already computed, then compute the indexes
@@ -78,17 +80,26 @@ class ImageManager:
                 avgs = [float(x) for x in descriptor(pixList)]
                 #avgs = descriptor(pixList)
                 self.indexBase.append([fn, avgs])
+                # Save to desk
+                p = fn.find("/")
+                fn = fn[p:]
+                nfile = open('indexBase/'+fn+'.txt', 'w')
+                nfile.write(str(self.indexBase[-1]))
+                nfile.write("\n")
+                nfile.close()
                 # TODO: Add to M tree
                 self.addObjectsToTree([fn, avgs])
                 print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
 
             # Save to desk
+            '''
             indexes = open('indexBase.txt', 'w')
             for i in range(len(self.indexBase)):
                 indexes.write(str(self.indexBase[i]))
                 indexes.write("\n")
             indexes.close()
+            '''
 
     def addObjectsToTree(self, obj):
         self.mtree.add(obj)
