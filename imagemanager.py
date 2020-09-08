@@ -3,6 +3,7 @@ import glob, os
 from PIL import ImageTk, Image
 from mtree import *
 import cv2
+import csvmanager
 
 # Pixel Info class (from sample code)
 class ImageManager:
@@ -10,6 +11,7 @@ class ImageManager:
         self.root = root
         self.descriptor = descriptor
         self.distance = distance
+        self.imgFolder = imgFolder
         ##############################
         ########### Mtree ############
         ##############################
@@ -27,7 +29,9 @@ class ImageManager:
         ##############################
         # Add each image (for evaluation) into a list (from sample code)
         if withIndexBase:
-            imgFolder = 'images/*.jpg'
+            imgFolder = 'default/*.jpg'
+        else:
+            imgFolder = imgFolder+"/*.jpg"
         for infile in glob.glob(imgFolder):
             im = Image.open(infile)
             pt = ImageTk.PhotoImage(im)
@@ -58,15 +62,18 @@ class ImageManager:
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            for index in glob.glob('indexBase/*.txt'):
-                signature = open(index, 'r')
-                for line in signature:
+            for index in glob.glob('indexBase/*.csv'):
+                #signature = open(index, 'r')
+                '''for line in signature:
                     line = line.replace("[", "").replace("]", "").replace("(", "").replace(")", "").split(",")
                     filename = line[0]
                     avgs = [float(x) for x in line[1:]]
                     # TODO: Add to M tree
                     self.addObjectsToTree([filename, avgs])
-                    print(".", end= " ")
+                    print(".", end= " ")'''
+                data = csvmanager.readCSV_AVG(index)
+                # TODO: Add to M tree
+                self.addObjectsToTree([data[0], data[1:]])
             print("\n[INFO]-- Insertion completed.")
 
         # If not already computed, then compute the indexes
@@ -83,10 +90,13 @@ class ImageManager:
                 # Save to desk
                 p = fn.find("/")
                 fn = fn[p:]
-                nfile = open('indexBase/'+fn+'.txt', 'w')
-                nfile.write(str(self.indexBase[-1]))
-                nfile.write("\n")
-                nfile.close()
+                #nfile = open('indexBase/'+fn+'.txt', 'w')
+                data = [self.indexBase[-1][0]] # filename
+                data.extend(self.indexBase[-1][1]) # avgs
+                csvmanager.writeCSV_AVG('indexBase/'+fn+'.csv', data)
+                #nfile.write(str(self.indexBase[-1]))
+                #nfile.write("\n")
+                #nfile.close()
                 # TODO: Add to M tree
                 self.addObjectsToTree([fn, avgs])
                 print(".", end= " ")

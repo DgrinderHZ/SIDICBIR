@@ -316,7 +316,9 @@ class CBIR(Frame):
         withIndexBase = False
         if self.var_choix.get() == "Dossier CSVs : ":
             withIndexBase = True
-        self.imgManager = ImageManager(self.root, DESC, DIST, self.folder_path.get()+"/*.jpg", withIndexBase)
+        # TODO: Save Index database related folder
+        imgFolder = self.imgManager.imgFolder
+        self.imgManager = ImageManager(self.root, DESC, DIST, imgFolder+"/*.jpg", withIndexBase)
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()
@@ -338,7 +340,7 @@ class CBIR(Frame):
         self.currentImageList, self.currentPhotoList = [], []
         for img in results:
             if img != 'None':
-                im = Image.open(img.replace("'", ""))
+                im = Image.open(self.imgManager.imgFolder + img.replace("/", ""))
                 # Resize the image for thumbnails.
                 resized = im.resize((128, 128), Image.ADAPTIVE)
                 photo = ImageTk.PhotoImage(resized)
