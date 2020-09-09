@@ -292,7 +292,7 @@ class CBIR(Frame):
 
     def indexer(self):
         if self.folder_path.get() == "":
-            print("empty")
+            print("empty path")
         else:
             print(self.folder_path.get())
         
@@ -313,12 +313,15 @@ class CBIR(Frame):
         elif self.var_desciptor.get() == '          Interesect        ':
             DIST = Distance.intersect
        
+        # TODO: Save Index database related folder
+        imgFolder = self.imgManager.imgFolder
         withIndexBase = False
         if self.var_choix.get() == "Dossier CSVs : ":
             withIndexBase = True
-        # TODO: Save Index database related folder
-        imgFolder = self.imgManager.imgFolder
-        self.imgManager = ImageManager(self.root, DESC, DIST, imgFolder+"/*.jpg", withIndexBase)
+        else:
+            imgFolder = self.folder_path.get()
+        imageFormat = '.jpg'
+        self.imgManager = ImageManager(self.root, DESC, DIST, imgFolder, imageFormat, withIndexBase)
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()
@@ -335,12 +338,13 @@ class CBIR(Frame):
         #queryFeature = Descriptor.getHist(list(im.getdata()))
 
         im = cv2.imread(self.selected.filename)
+        im = cv2.resize(im, (24, 24))
         queryFeature = self.imgManager.descriptor(list(im))
         results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
         self.currentImageList, self.currentPhotoList = [], []
         for img in results:
             if img != 'None':
-                im = Image.open(self.imgManager.imgFolder + img.replace("/", ""))
+                im = Image.open(self.imgManager.imgFolder + "/" + img) #.replace("/", "")
                 # Resize the image for thumbnails.
                 resized = im.resize((128, 128), Image.ADAPTIVE)
                 photo = ImageTk.PhotoImage(resized)
@@ -411,7 +415,16 @@ class CBIR(Frame):
                 imagesFrame = Frame(self.canvas, bg=self.bgc, border=0)
                 imagesFrame.pack(padx = 15)
                 
-                lbl = Label(imagesFrame,text=filename)
+                fn = filename
+                p = fn[::-1].find("\\")
+                if p != -1:
+                    fn = fn[len(fn)-p:]
+                else:
+                    p = fn[::-1].find("/")
+                    if p != -1:
+                        fn = fn[len(fn)-p:]
+
+                lbl = Label(imagesFrame,text=fn)
                 lbl.pack()
                 # Put image as a button
                 handler = lambda f=filename: self.update_preview(f)
@@ -440,7 +453,8 @@ class CBIR(Frame):
         :param f: image identifier (the first image by default)
         """
         self.selected = Image.open(f.replace("\\", "/"))
-        self.selectedPhoto = ImageTk.PhotoImage(self.selected)
+        resized = self.selected.resize((320, 200), Image.ANTIALIAS)
+        self.selectedPhoto = ImageTk.PhotoImage(resized)
         self.selectedImage.configure(image=self.selectedPhoto)
 
     # updates results page to previous page

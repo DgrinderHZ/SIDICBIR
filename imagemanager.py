@@ -7,7 +7,7 @@ import csvmanager
 
 # Pixel Info class (from sample code)
 class ImageManager:
-    def __init__(self, root, descriptor, distance, imgFolder, withIndexBase=False):
+    def __init__(self, root, descriptor, distance, imgFolder, imageFormat, withIndexBase=False):
         self.root = root
         self.descriptor = descriptor
         self.distance = distance
@@ -34,7 +34,6 @@ class ImageManager:
             imgFolder = imgFolder+"/*.jpg"
         for infile in glob.glob(imgFolder):
             im = Image.open(infile)
-            pt = ImageTk.PhotoImage(im)
             # Resize the image for thumbnails.
             imSize = im.size
             x = imSize[0]
@@ -83,13 +82,14 @@ class ImageManager:
             for im in self.imageList[:]:
                 fn = im.filename.replace("\\", "/")
                 imData = cv2.imread(fn)
+                imData = cv2.resize(imData, (24, 24))
                 pixList = list(imData)
                 avgs = [float(x) for x in descriptor(pixList)]
                 #avgs = descriptor(pixList)
                 self.indexBase.append([fn, avgs])
                 # Save to desk
-                p = fn.find("/")
-                fn = fn[p:]
+                p = fn[::-1].find("/")
+                fn = fn[len(fn)-p:]
                 #nfile = open('indexBase/'+fn+'.txt', 'w')
                 data = [self.indexBase[-1][0]] # filename
                 data.extend(self.indexBase[-1][1]) # avgs
