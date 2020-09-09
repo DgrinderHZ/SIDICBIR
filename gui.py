@@ -159,7 +159,7 @@ class CBIR(Frame):
 
         ######## Descriptor selection
         self.var_desciptor = StringVar()
-        optionList = ('Moments Statistiques', '      Histogramme     ', '           Moyenne         ')
+        optionList = ('Moments Statistiques', 'Histogramme', 'Avgs')
         self.canva_desc = Canvas(self.dbQueryPanel)
         self.canva_desc.pack(pady=5)
 
@@ -180,7 +180,7 @@ class CBIR(Frame):
 
         ######## Distance selection
         self.var_distance = StringVar()
-        optionListD = ('D. Euclidien', '      CHi square     ', '          Interesect        ')
+        optionListD = ('D. Euclidien', 'CHi square', 'Interesect')
         self.canva_dist = Canvas(self.dbQueryPanel)
         self.canva_dist.pack(pady= 5)
 
@@ -296,22 +296,32 @@ class CBIR(Frame):
         else:
             print(self.folder_path.get())
         
+        # **************** CHOIX: DESCRIPTOR n DISTANCE *****************
         DESC = Descriptor.getAvgs
         DIST = Distance.euclid
+        descDist = ["Avgs", "Euclid"]
 
         if self.var_desciptor.get() == 'Moments Statistiques':
             DESC = Descriptor.getCMoments
-        elif self.var_desciptor.get() == '      Histogramme     ':
+            descDist[0] = "Moments"
+        elif self.var_desciptor.get() == 'Histogramme':
             DESC = Descriptor.getHist
-        elif self.var_desciptor.get() == '           Moyenne         ':
+            descDist[0] = "Hist"
+            print("hist_________________________")
+        elif self.var_desciptor.get() == 'Avgs':
             DESC = Descriptor.getAvgs
+            descDist[0] = "Avgs"
         
-        if self.var_desciptor.get() == 'D. Euclidien':
+        if self.var_distance.get() == 'D. Euclidien':
             DIST = Distance.euclid
-        elif self.var_desciptor.get() == '      CHi square     ':
+            descDist[1] = "Euclid"
+        elif self.var_distance.get() == 'CHi square':
             DIST = Distance.chi
-        elif self.var_desciptor.get() == '          Interesect        ':
+            descDist[1] = "Chi2"
+            print("Chi2_________________________")
+        elif self.var_distance.get() == 'Interesect':
             DIST = Distance.intersect
+            descDist[1] = "Intersect"
        
         # TODO: Save Index database related folder
         imgFolder = self.imgManager.imgFolder
@@ -321,7 +331,8 @@ class CBIR(Frame):
         else:
             imgFolder = self.folder_path.get()
         imageFormat = '.jpg'
-        self.imgManager = ImageManager(self.root, DESC, DIST, imgFolder, imageFormat, withIndexBase)
+
+        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, imgFolder, imageFormat, withIndexBase)
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()
@@ -414,16 +425,8 @@ class CBIR(Frame):
             for (filename, img) in photoRow:
                 imagesFrame = Frame(self.canvas, bg=self.bgc, border=0)
                 imagesFrame.pack(padx = 15)
-                
-                fn = filename
-                p = fn[::-1].find("\\")
-                if p != -1:
-                    fn = fn[len(fn)-p:]
-                else:
-                    p = fn[::-1].find("/")
-                    if p != -1:
-                        fn = fn[len(fn)-p:]
 
+                fn = self.imgManager.cleanFileName(filename)
                 lbl = Label(imagesFrame,text=fn)
                 lbl.pack()
                 # Put image as a button
@@ -485,3 +488,5 @@ class CBIR(Frame):
         if len(self.photoList) % 24 > 0:
             pages += 1
         return pages
+    
+    

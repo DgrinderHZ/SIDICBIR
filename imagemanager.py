@@ -7,11 +7,12 @@ import csvmanager
 
 # Pixel Info class (from sample code)
 class ImageManager:
-    def __init__(self, root, descriptor, distance, imgFolder, imageFormat, withIndexBase=False):
+    def __init__(self, root, descriptor, distance, descDist, imgFolder, imageFormat, withIndexBase=False):
         self.root = root
         self.descriptor = descriptor
         self.distance = distance
         self.imgFolder = imgFolder
+        self.descDist = descDist
         ##############################
         ########### Mtree ############
         ##############################
@@ -62,44 +63,47 @@ class ImageManager:
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
             for index in glob.glob('indexBase/*.csv'):
-                #signature = open(index, 'r')
-                '''for line in signature:
-                    line = line.replace("[", "").replace("]", "").replace("(", "").replace(")", "").split(",")
-                    filename = line[0]
-                    avgs = [float(x) for x in line[1:]]
-                    # TODO: Add to M tree
-                    self.addObjectsToTree([filename, avgs])
-                    print(".", end= " ")'''
                 data = csvmanager.readCSV_AVG(index)
                 # TODO: Add to M tree
                 self.addObjectsToTree([data[0], data[1:]])
             print("\n[INFO]-- Insertion completed.")
+            #signature = open(index, 'r')
+            '''for line in signature:
+                line = line.replace("[", "").replace("]", "").replace("(", "").replace(")", "").split(",")
+                filename = line[0]
+                avgs = [float(x) for x in line[1:]]
+                # TODO: Add to M tree
+                self.addObjectsToTree([filename, avgs])
+                print(".", end= " ")'''
 
         # If not already computed, then compute the indexes
         else:
             # Compute
             print("[INFO]-- Adding Images to the tree")
-            for im in self.imageList[:]:
-                fn = im.filename.replace("\\", "/")
-                imData = cv2.imread(fn)
-                imData = cv2.resize(imData, (24, 24))
-                pixList = list(imData)
-                avgs = [float(x) for x in descriptor(pixList)]
-                #avgs = descriptor(pixList)
-                self.indexBase.append([fn, avgs])
-                # Save to desk
-                p = fn[::-1].find("/")
-                fn = fn[len(fn)-p:]
-                #nfile = open('indexBase/'+fn+'.txt', 'w')
-                data = [self.indexBase[-1][0]] # filename
-                data.extend(self.indexBase[-1][1]) # avgs
-                csvmanager.writeCSV_AVG('indexBase/'+fn+'.csv', data)
-                #nfile.write(str(self.indexBase[-1]))
-                #nfile.write("\n")
-                #nfile.close()
-                # TODO: Add to M tree
-                self.addObjectsToTree([fn, avgs])
-                print(".", end= " ")
+            if descDist[0] == "Avgs":
+                for im in self.imageList[:]:
+                    # 1 get image data
+                    fn, pixList = self.openImage(im)
+                    # 2 get descriptor
+                    avgs = [float(x) for x in descriptor(pixList)]
+                    obj = [fn, avgs]
+                    # 3 Save to desk
+                    self.saveToDesk(obj)
+                    # TODO: 4 Add to M tree
+                    self.addObjectsToTree(obj)
+                    print(".", end= " ")
+            elif descDist[0] == "Hist": # Descriptor is Histogram
+                for im in self.imageList[:]:
+                    # 1 get image data
+                    fn, pixList = self.openImage(im)
+                    # 2 get descriptor
+                    hist = descriptor(pixList)
+                    obj = [fn, hist]
+                    # 3 Save to desk
+                    self.saveToDesk(obj)
+                    # TODO: 4 Add to M tree
+                    self.addObjectsToTree(obj)
+                    print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
 
             # Save to desk
@@ -110,6 +114,29 @@ class ImageManager:
                 indexes.write("\n")
             indexes.close()
             '''
+    def openImage(self, im):
+        fn = self.cleanFileName(im.filename)
+        imData = cv2.imread(im.filename.replace("\\","/"))
+        imData = cv2.resize(imData, (24, 24))
+        pixList = list(imData)
+        return fn, pixList
+
+    def saveToDesk(self, obj):
+        fn = self.cleanFileName(obj[0])
+        data = [fn] # filename
+        data.extend(obj[1]) # avgs, hist, moment, ...
+        csvmanager.writeCSV_AVG('indexBase/'+fn+'.csv', data)
+
+    def cleanFileName(self, filename):
+        fn = filename
+        p = fn[::-1].find("\\")
+        if p != -1:
+            fn = fn[len(fn)-p:]
+        else:
+            p = fn[::-1].find("/")
+            if p != -1:
+                fn = fn[len(fn)-p:]
+        return fn
 
     def addObjectsToTree(self, obj):
         self.mtree.add(obj)
