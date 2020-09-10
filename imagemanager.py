@@ -4,6 +4,7 @@ from PIL import ImageTk, Image
 from mtree import *
 import cv2
 import csvmanager
+import numpy as np
 
 # Pixel Info class (from sample code)
 class ImageManager:
@@ -62,19 +63,21 @@ class ImageManager:
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            for index in glob.glob('indexBase/*.csv'):
-                data = csvmanager.readCSV_AVG(index)
-                # TODO: Add to M tree
-                self.addObjectsToTree([data[0], data[1:]])
+            if descDist[0] == "Avgs":
+                for index in glob.glob('indexBase/*.csv'):
+                    data = csvmanager.readCSV_AVG(index)
+                    # TODO: Add to M tree
+                    self.addObjectsToTree([data[0], data[1:]])
+            elif descDist[0] == "Hist": # Descriptor is Histogram
+                for index in glob.glob('indexBase/*.csv'):
+                    data = csvmanager.readCSV_AVG(index)
+                    # TODO: Add to M tree
+                    csvHist = np.array(list(map(np.float32, data[1:])))
+                    print(csvHist)
+                    hist = np.reshape(csvHist, (17, 17, 17))
+                    self.addObjectsToTree([data[0], hist])
             print("\n[INFO]-- Insertion completed.")
-            #signature = open(index, 'r')
-            '''for line in signature:
-                line = line.replace("[", "").replace("]", "").replace("(", "").replace(")", "").split(",")
-                filename = line[0]
-                avgs = [float(x) for x in line[1:]]
-                # TODO: Add to M tree
-                self.addObjectsToTree([filename, avgs])
-                print(".", end= " ")'''
+            
 
         # If not already computed, then compute the indexes
         else:
@@ -98,10 +101,11 @@ class ImageManager:
                     fn, pixList = self.openImage(im)
                     # 2 get descriptor
                     hist = descriptor(pixList)
-                    obj = [fn, hist]
+                    obj = [fn, hist.flatten()]
                     # 3 Save to desk
                     self.saveToDesk(obj)
                     # TODO: 4 Add to M tree
+                    obj = [fn, hist]
                     self.addObjectsToTree(obj)
                     print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")

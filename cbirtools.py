@@ -66,7 +66,7 @@ class Descriptor():
         features.extend(Descriptor.getSTDs(imgPix))
         features.extend(v)
         return features
-
+    
     def getHist(imgPix):
         """
         Return bgr Histograms
@@ -75,7 +75,7 @@ class Descriptor():
         rbgHist= cv2.calcHist(images=[imgPix], 
                             channels=[0, 1, 2], 
                             mask=None, 
-                            histSize=[8, 8, 8], 
+                            histSize=[17, 17, 17], 
                             ranges=[0, 256, 0, 256, 0, 256])
 		
         return rbgHist
