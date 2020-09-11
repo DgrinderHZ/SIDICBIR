@@ -63,7 +63,7 @@ class ImageManager:
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs":
+            if descDist[0] == "Avgs" or descDist[0] == "Moments":
                 for index in glob.glob('indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
@@ -73,9 +73,10 @@ class ImageManager:
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
                     csvHist = np.array(list(map(np.float32, data[1:])))
-                    print(csvHist)
+                    #print(csvHist)
                     hist = np.reshape(csvHist, (17, 17, 17))
                     self.addObjectsToTree([data[0], hist])
+            
             print("\n[INFO]-- Insertion completed.")
             
 
@@ -83,7 +84,7 @@ class ImageManager:
         else:
             # Compute
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs":
+            if descDist[0] == "Avgs" or descDist[0] == "Moments":
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn, pixList = self.openImage(im)
@@ -110,14 +111,6 @@ class ImageManager:
                     print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
 
-            # Save to desk
-            '''
-            indexes = open('indexBase.txt', 'w')
-            for i in range(len(self.indexBase)):
-                indexes.write(str(self.indexBase[i]))
-                indexes.write("\n")
-            indexes.close()
-            '''
     def openImage(self, im):
         fn = self.cleanFileName(im.filename)
         imData = cv2.imread(im.filename.replace("\\","/"))

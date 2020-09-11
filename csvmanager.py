@@ -23,7 +23,7 @@ def readCSV_AVG(csvFile):
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
         for row in spamreader:
             result.append(row)
-    for i in range(1,4):
+    for i in range(1, len(result[0])):
         result[0][i] = float(result[0][i])
     return result[0]
 

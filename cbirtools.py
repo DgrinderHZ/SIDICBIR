@@ -17,15 +17,6 @@ class Descriptor():
         :return: (avgR, avgG, avgB)
         """
         imgPix = np.array(imgPix)
-        #t = [0. for _ in range(3)]
-        #for i in range(len(imgPix)):
-        #    for j in range(len(imgPix[0])):
-        #        t[0] += imgPix[i][j][0]
-        #        t[1] += imgPix[i][j][1]
-        #        t[2] += imgPix[i][j][2]
-        #t = [y/(len(imgPix)*len(imgPix[0])) for y in t]
-        #print(imgPix.shape)
-        #print(imgPix.mean(axis=1).mean(axis=0), "equals", t)
         return list(imgPix.mean(axis=1).mean(axis=0))
 
     def getSTDs(imgPix):
@@ -34,25 +25,17 @@ class Descriptor():
         :return:
         """
         imgPix = np.array(imgPix)
-        """
-        mean = Descriptor.getAvgs(imgPix)
-        v = [0. for _ in range(3)]
-        for i in range(len(imgPix)):
-            for j in range(len(imgPix[0])):
-                v[0] += (imgPix[i][j][0] - mean[0])**2
-                v[1] += (imgPix[i][j][1] - mean[1])**2
-                v[2] += (imgPix[i][j][2] - mean[2])**2
-        v = [ sqrt(y/(len(imgPix)*len(imgPix[0])))  for y in v]
-        """
-        #print(v, "equals", imgPix.std(axis=1).std(axis=0))
         return list(imgPix.std(axis=1).std(axis=0))
     
-    def getCMoments(imgPix):
+    def getMoments(imgPix):
         """
         moment d’ordre trois.
         :return:
         """
         imgPix = np.array(imgPix)
+        height, width, channels = imgPix.shape
+        sz = height*width
+        
         mean = Descriptor.getAvgs(imgPix)
         v = [0. for _ in range(3)]
         for i in range(len(imgPix)):
@@ -60,7 +43,7 @@ class Descriptor():
                 v[0] += (imgPix[i][j][0] - mean[0])**3
                 v[1] += (imgPix[i][j][1] - mean[1])**3
                 v[2] += (imgPix[i][j][2] - mean[2])**3
-        v = [ abs(y/(len(imgPix)*len(imgPix[0])))**(1/3) for y in v]
+        v = [ abs((y/sz))**(1/3) for y in v]
         features = []
         features.extend(mean)
         features.extend(Descriptor.getSTDs(imgPix))

@@ -302,26 +302,30 @@ class CBIR(Frame):
         descDist = ["Avgs", "Euclid"]
 
         if self.var_desciptor.get() == 'Moments Statistiques':
-            DESC = Descriptor.getCMoments
+            DESC = Descriptor.getMoments
             descDist[0] = "Moments"
+            print("[INFO] DESC = Moments")
         elif self.var_desciptor.get() == 'Histogramme':
             DESC = Descriptor.getHist
             descDist[0] = "Hist"
-            print("hist_________________________")
+            print("[INFO] DESC = Hist")
         elif self.var_desciptor.get() == 'Avgs':
             DESC = Descriptor.getAvgs
             descDist[0] = "Avgs"
+            print("[INFO] DESC = Avgs")
         
         if self.var_distance.get() == 'D. Euclidien':
             DIST = Distance.euclid
             descDist[1] = "Euclid"
+            print("[INFO] DIST = Euclid")
         elif self.var_distance.get() == 'CHi square':
             DIST = Distance.chi
             descDist[1] = "Chi2"
-            print("Chi2_________________________")
+            print("[INFO] DIST = CHISQ2")
         elif self.var_distance.get() == 'Interesect':
             DIST = Distance.intersect
             descDist[1] = "Intersect"
+            print("[INFO] DIST = Intersect")
        
         # TODO: Save Index database related folder
         imgFolder = self.imgManager.imgFolder
