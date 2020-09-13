@@ -4,6 +4,7 @@
     DISTANCE FUNCTIONS
 """
 from math import sqrt
+import math
 import numpy as np
 import cv2
 
@@ -62,6 +63,17 @@ class Descriptor():
                             ranges=[0, 256, 0, 256, 0, 256])
 		
         return rbgHist
+    
+    def getGabor(image):
+        kernel        = cv2.getGaborKernel((21, 21), 8.0, np.pi/4, 10.0, 0.5, 0, ktype=cv2.CV_32F)
+        kernel       /= math.sqrt((kernel * kernel).sum())
+        filtered_img  = cv2.filter2D(image,    cv2.CV_8UC3, kernel)
+        heigth, width = kernel.shape 
+    
+        #cv2.imwrite("{}.jpg".format(1), filtered_img)
+        # convert matrix to vector 
+        descriptor = cv2.resize(filtered_img, (3*width, 3*heigth), interpolation=cv2.INTER_CUBIC)
+        return np.hstack(descriptor)
 
 
 

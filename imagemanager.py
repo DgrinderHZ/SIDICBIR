@@ -63,11 +63,12 @@ class ImageManager:
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs" or descDist[0] == "Moments":
+            if descDist[0] == "Avgs" or descDist[0] == "Moments" or descDist[0] == "Gabor":
                 for index in glob.glob('indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
                     self.addObjectsToTree([data[0], data[1:]])
+                    print(".", end= " ")
             elif descDist[0] == "Hist": # Descriptor is Histogram
                 for index in glob.glob('indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
@@ -76,7 +77,7 @@ class ImageManager:
                     #print(csvHist)
                     hist = np.reshape(csvHist, (17, 17, 17))
                     self.addObjectsToTree([data[0], hist])
-            
+                    print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
             
 
@@ -107,6 +108,20 @@ class ImageManager:
                     self.saveToDesk(obj)
                     # TODO: 4 Add to M tree
                     obj = [fn, hist]
+                    self.addObjectsToTree(obj)
+                    print(".", end= " ")
+            elif descDist[0] == "Gabor":
+                for im in self.imageList[:]:
+                    # 1 get image data
+                    fn = self.cleanFileName(im.filename)
+                    image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                    imData = cv2.resize(image, (24, 24))
+                    # 2 get descriptor
+                    avgs = [float(x) for x in descriptor(imData)]
+                    obj = [fn, avgs]
+                    # 3 Save to desk
+                    self.saveToDesk(obj)
+                    # TODO: 4 Add to M tree
                     self.addObjectsToTree(obj)
                     print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")

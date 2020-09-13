@@ -159,7 +159,7 @@ class CBIR(Frame):
 
         ######## Descriptor selection
         self.var_desciptor = StringVar()
-        optionList = ('Moments Statistiques', 'Histogramme', 'Avgs')
+        optionList = ('Moments Statistiques', 'Histogramme', 'Avgs', 'Gabor')
         self.canva_desc = Canvas(self.dbQueryPanel)
         self.canva_desc.pack(pady=5)
 
@@ -313,6 +313,10 @@ class CBIR(Frame):
             DESC = Descriptor.getAvgs
             descDist[0] = "Avgs"
             print("[INFO] DESC = Avgs")
+        elif self.var_desciptor.get() == 'Gabor':
+            DESC = Descriptor.getGabor
+            descDist[0] = "Gabor"
+            print("[INFO] DESC = Gabor")
         
         if self.var_distance.get() == 'D. Euclidien':
             DIST = Distance.euclid
@@ -351,17 +355,25 @@ class CBIR(Frame):
         # TODO: use cv2
         #im = Image.open(self.selected.filename)
         #queryFeature = Descriptor.getHist(list(im.getdata()))
-
-        im = cv2.imread(self.selected.filename)
-        im = cv2.resize(im, (24, 24))
-        queryFeature = self.imgManager.descriptor(list(im))
+        queryFeature = []
+        if self.imgManager.descDist[0] == 'Gabor':
+            # 1 get image data
+            image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+            imData = cv2.resize(image, (24, 24))
+            # 2 get descriptor
+            queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
+        else:
+            im = cv2.imread(self.selected.filename)
+            im = cv2.resize(im, (24, 24))
+            queryFeature = self.imgManager.descriptor(list(im))
+        
         results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
         self.currentImageList, self.currentPhotoList = [], []
         for img in results:
             if img != 'None':
                 im = Image.open(self.imgManager.imgFolder + "/" + img) #.replace("/", "")
                 # Resize the image for thumbnails.
-                resized = im.resize((128, 128), Image.ADAPTIVE)
+                resized = im.resize((128, 128), Image.ANTIALIAS)
                 photo = ImageTk.PhotoImage(resized)
                 self.currentImageList.append(im)
                 self.currentPhotoList.append(photo)
