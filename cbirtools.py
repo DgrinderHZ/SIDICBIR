@@ -74,6 +74,25 @@ class Descriptor():
         # convert matrix to vector 
         descriptor = cv2.resize(filtered_img, (3*width, 3*heigth), interpolation=cv2.INTER_CUBIC)
         return np.hstack(descriptor)
+    
+    def getGaborFilterBank(ksize):
+        gaborFilters = []
+        _lambda = [0.06, 0.09, 0.13, 0.18, 0.25]
+        for lnda in _lambda:
+            for tta in np.arange(0, np.pi, np.pi / 8):
+                kern = cv2.getGaborKernel((ksize, ksize), 3.0, tta, lnda, 0.5, 0, ktype=cv2.CV_32F)
+                gaborFilters.append(kern)
+        return gaborFilters
+
+    def getGaborFeatures(image):
+        bank = Descriptor.getGaborFilterBank(31)
+        #image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
+        features = []
+        for kernel in bank:
+            filtred = cv2.filter2D(image, cv2.CV_8UC3, kernel)
+            features.append(kernel.mean())
+            features.append( kernel.std())
+        return features
 
 
 
@@ -87,6 +106,14 @@ class Distance():
     """
     Defines different distances to use!
     """
+    def manhatan(obj, query):
+        avgs1 = obj[1]
+        avgs2 = query[1]
+        d = 0
+        for i in range(len(avgs1)):
+            d += abs(avgs1[i]-avgs2[i])
+        return d
+
     def euclid(obj, query):
         avgs1 = obj[1]
         avgs2 = query[1]

@@ -159,7 +159,7 @@ class CBIR(Frame):
 
         ######## Descriptor selection
         self.var_desciptor = StringVar()
-        optionList = ('Moments Statistiques', 'Histogramme', 'Avgs', 'Gabor')
+        optionList = ('Moments Statistiques', 'Histogramme', 'Avgs', 'Gabor', 'GaborV')
         self.canva_desc = Canvas(self.dbQueryPanel)
         self.canva_desc.pack(pady=5)
 
@@ -180,7 +180,7 @@ class CBIR(Frame):
 
         ######## Distance selection
         self.var_distance = StringVar()
-        optionListD = ('D. Euclidien', 'CHi square', 'Interesect')
+        optionListD = ('D. Euclidien', 'CHi square', 'Interesect', 'Manhatan')
         self.canva_dist = Canvas(self.dbQueryPanel)
         self.canva_dist.pack(pady= 5)
 
@@ -317,6 +317,10 @@ class CBIR(Frame):
             DESC = Descriptor.getGabor
             descDist[0] = "Gabor"
             print("[INFO] DESC = Gabor")
+        elif self.var_desciptor.get() == 'GaborV':
+            DESC = Descriptor.getGaborFeatures
+            descDist[0] = "GaborV"
+            print("[INFO] DESC = GaborV")
         
         if self.var_distance.get() == 'D. Euclidien':
             DIST = Distance.euclid
@@ -330,6 +334,14 @@ class CBIR(Frame):
             DIST = Distance.intersect
             descDist[1] = "Intersect"
             print("[INFO] DIST = Intersect")
+        elif self.var_distance.get() == 'Interesect':
+            DIST = Distance.intersect
+            descDist[1] = "Intersect"
+            print("[INFO] DIST = Intersect")
+        elif self.var_distance.get() == 'Manhatan':
+            DIST = Distance.manhatan
+            descDist[1] = "Manhatan"
+            print("[INFO] DIST = Manhatan")
        
         # TODO: Save Index database related folder
         imgFolder = self.imgManager.imgFolder
@@ -356,15 +368,15 @@ class CBIR(Frame):
         #im = Image.open(self.selected.filename)
         #queryFeature = Descriptor.getHist(list(im.getdata()))
         queryFeature = []
-        if self.imgManager.descDist[0] == 'Gabor':
+        if 'Gabor' in self.imgManager.descDist[0]:
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-            imData = cv2.resize(image, (24, 24))
+            imData = cv2.resize(image, (60, 60))
             # 2 get descriptor
             queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
         else:
             im = cv2.imread(self.selected.filename)
-            im = cv2.resize(im, (24, 24))
+            im = cv2.resize(im, (60, 60))
             queryFeature = self.imgManager.descriptor(list(im))
         
         results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())

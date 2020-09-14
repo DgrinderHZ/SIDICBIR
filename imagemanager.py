@@ -63,7 +63,7 @@ class ImageManager:
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs" or descDist[0] == "Moments" or descDist[0] == "Gabor":
+            if descDist[0] == "Avgs" or descDist[0] == "Moments" or "Gabor" in descDist[0]:
                 for index in glob.glob('indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
@@ -110,12 +110,12 @@ class ImageManager:
                     obj = [fn, hist]
                     self.addObjectsToTree(obj)
                     print(".", end= " ")
-            elif descDist[0] == "Gabor":
+            elif descDist[0] == "Gabor" or descDist[0] == "GaborV":
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn = self.cleanFileName(im.filename)
                     image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    imData = cv2.resize(image, (24, 24))
+                    imData = cv2.resize(image, (60, 60))
                     # 2 get descriptor
                     avgs = [float(x) for x in descriptor(imData)]
                     obj = [fn, avgs]
@@ -129,7 +129,7 @@ class ImageManager:
     def openImage(self, im):
         fn = self.cleanFileName(im.filename)
         imData = cv2.imread(im.filename.replace("\\","/"))
-        imData = cv2.resize(imData, (24, 24))
+        imData = cv2.resize(imData, (60, 60))
         pixList = list(imData)
         return fn, pixList
 
