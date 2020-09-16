@@ -9,6 +9,7 @@ class CBIR_SIDI(Frame):
     def __init__(self, root, imageManager, w, h):
         self.w, self.h = w, h
         self.root = root
+        self.basedOn = 1
         # variables
         self.imgManager = imageManager # image manager
         self.imageList = imageManager.get_imageList()
