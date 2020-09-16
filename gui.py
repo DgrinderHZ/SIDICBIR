@@ -389,6 +389,10 @@ class CBIR_SIDI(Frame):
             DESC = Descriptor.getGaborFeatures
             descDist[0] = "GaborV"
             print("[INFO] DESC = GaborV")
+        elif self.var_desciptor.get() == 'Haralick':
+            DESC = Descriptor.getHaralickFeatures
+            descDist[0] = "Haralick"
+            print("[INFO] DESC = Haralick")
         
         if self.var_distance.get() == 'D. Euclidien':
             DIST = Distance.euclid
@@ -472,7 +476,7 @@ class CBIR_SIDI(Frame):
         if self.basedOn == 1:
             optionList = ('Moments Statistiques', 'Histogramme', 'Avgs')
         elif self.basedOn == 2:
-            optionList = ('Gabor', 'GaborV')
+            optionList = ('Gabor', 'GaborV', 'Haralick')
         elif self.basedOn == 3:
             optionList = ('FD', 'DAISY')
         elif self.basedOn == 4:

@@ -7,6 +7,7 @@ from math import sqrt
 import math
 import numpy as np
 import cv2
+from mahotas import features
 
 class Descriptor():
     """
@@ -64,6 +65,7 @@ class Descriptor():
 		
         return rbgHist
     
+    #_________________________________________________________________________
     def getGabor(image):
         kernel        = cv2.getGaborKernel((21, 21), 8.0, np.pi/4, 10.0, 0.5, 0, ktype=cv2.CV_32F)
         kernel       /= math.sqrt((kernel * kernel).sum())
@@ -93,6 +95,11 @@ class Descriptor():
             features.append(kernel.mean())
             features.append( kernel.std())
         return features
+    
+
+    def getHaralickFeatures(imgPix):
+        imgPix = np.array(imgPix)
+        return list(features.haralick(imgPix, return_mean=True))
 
 
 
