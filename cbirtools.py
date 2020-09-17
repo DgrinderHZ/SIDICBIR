@@ -6,7 +6,7 @@
 from math import sqrt
 import math
 import numpy as np
-import cv2
+import cv2, imutils
 from mahotas import features
 
 class Descriptor():
@@ -104,9 +104,32 @@ class Descriptor():
     #________________________Shape________________________
     def getHuMoments(gray):
         # Perform a simple segmentation
-        (T, thresholded) = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+        (T, thresholded) = cv2.threshold(gray, 28, 255, cv2.THRESH_BINARY)
         # return HuMoments
         return cv2.HuMoments(cv2.moments(thresholded)).flatten()
+    
+
+    def getZernikeMoments(image, radius=21):
+        # pad the image with extra white pixels to ensure the
+        # edges of the pokemon are not up against the borders
+        # of the image
+        image[image <= 36] = 0
+        image = cv2.copyMakeBorder(image, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value = 0)
+        # invert the image and threshold it
+        #thresh = cv2.bitwise_not(image)
+        thresh = image.copy()
+        thresh[thresh > 0] = 255
+        # initialize the outline image, find the outermost
+        # contours (the outline) of the pokemone, then draw
+        # it
+        outline = np.zeros(image.shape, dtype = "uint8")
+        cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[0]
+        cv2.drawContours(outline, [cnts], -1, 255, -1)
+        # compute Zernike moments to characterize the shape
+        # of pokemon outline, then update the index
+        return features.zernike_moments(outline, radius)
 
 
 

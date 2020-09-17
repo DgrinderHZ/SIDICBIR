@@ -64,7 +64,7 @@ class ImageManager:
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs" or descDist[0] == "Moments" \
+            if descDist[0] == "Avgs" or descDist[0] == "Moments" or descDist[0] == "ZernikeMoments"\
             or "Gabor" in descDist[0] or descDist[0] == "Haralick" or descDist[0] == "HuMoments":
                 for index in glob.glob('indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
@@ -126,7 +126,7 @@ class ImageManager:
                     # TODO: 4 Add to M tree
                     self.addObjectsToTree(obj)
                     print(".", end= " ")
-            elif descDist[0] == "HuMoments":
+            elif descDist[0] == "HuMoments" or descDist[0] == "ZernikeMoments":
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn = self.cleanFileName(im.filename)

@@ -409,6 +409,10 @@ class CBIR_SIDI(Frame):
             DESC = Descriptor.getHuMoments
             descDist[0] = "HuMoments"
             print("[INFO] DESC = HuMoments")
+        elif self.var_desciptor.get() == 'ZernikeMoments':
+            DESC = Descriptor.getZernikeMoments
+            descDist[0] = "ZernikeMoments"
+            print("[INFO] DESC = ZernikeMoments")
 
         
         if self.var_distance.get() == 'D. Euclidien':
@@ -458,7 +462,13 @@ class CBIR_SIDI(Frame):
         #im = Image.open(self.selected.filename)
         #queryFeature = Descriptor.getHist(list(im.getdata()))
         queryFeature = []
-        if 'Gabor' in self.imgManager.descDist[0] or self.imgManager.descDist[0] == 'HuMoments':
+        if self.imgManager.descDist[0] == 'ZernikeMoments':
+            # 1 get image data
+            image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+            imData = cv2.resize(image, (60, 60))
+            # 2 get descriptor
+            queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
+        elif 'Gabor' in self.imgManager.descDist[0] or self.imgManager.descDist[0] == 'HuMoments':
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
             imData = cv2.resize(image, (60, 60))
@@ -496,7 +506,7 @@ class CBIR_SIDI(Frame):
         elif self.basedOn == 2:
             optionList = ('Gabor', 'GaborV', 'Haralick')
         elif self.basedOn == 3:
-            optionList = ('HuMoments', 'Zernick Moments')
+            optionList = ('HuMoments', 'ZernikeMoments')
         elif self.basedOn == 4:
             optionList = ('AVGs + Gabor', 'AVGS + FD')
         
