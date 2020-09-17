@@ -100,6 +100,13 @@ class Descriptor():
     def getHaralickFeatures(imgPix):
         imgPix = np.array(imgPix)
         return list(features.haralick(imgPix, return_mean=True))
+    
+    #________________________Shape________________________
+    def getHuMoments(gray):
+        # Perform a simple segmentation
+        (T, thresholded) = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+        # return HuMoments
+        return cv2.HuMoments(cv2.moments(thresholded)).flatten()
 
 
 

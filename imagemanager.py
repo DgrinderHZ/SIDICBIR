@@ -14,6 +14,7 @@ class ImageManager:
         self.distance = distance
         self.imgFolder = imgFolder
         self.descDist = descDist
+        self.imgFormat = imageFormat
         ##############################
         ########### Mtree ############
         ##############################
@@ -31,9 +32,9 @@ class ImageManager:
         ##############################
         # Add each image (for evaluation) into a list (from sample code)
         if withIndexBase:
-            imgFolder = 'default/*.jpg'
+            imgFolder = 'default/*' + self.imgFormat
         else:
-            imgFolder = imgFolder+"/*.jpg"
+            imgFolder = imgFolder+'/*' + self.imgFormat
         for infile in glob.glob(imgFolder):
             im = Image.open(infile)
             # Resize the image for thumbnails.
@@ -63,7 +64,8 @@ class ImageManager:
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs" or descDist[0] == "Moments" or "Gabor" in descDist[0] or descDist[0] == "Haralick":
+            if descDist[0] == "Avgs" or descDist[0] == "Moments" \
+            or "Gabor" in descDist[0] or descDist[0] == "Haralick" or descDist[0] == "HuMoments":
                 for index in glob.glob('indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
@@ -119,6 +121,20 @@ class ImageManager:
                     # 2 get descriptor
                     avgs = [float(x) for x in descriptor(imData)]
                     obj = [fn, avgs]
+                    # 3 Save to desk
+                    self.saveToDesk(obj)
+                    # TODO: 4 Add to M tree
+                    self.addObjectsToTree(obj)
+                    print(".", end= " ")
+            elif descDist[0] == "HuMoments":
+                for im in self.imageList[:]:
+                    # 1 get image data
+                    fn = self.cleanFileName(im.filename)
+                    image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                    imData = cv2.resize(image, (60, 60))
+                    # 2 get descriptor
+                    hu = [float(x) for x in descriptor(imData)]
+                    obj = [fn, hu]
                     # 3 Save to desk
                     self.saveToDesk(obj)
                     # TODO: 4 Add to M tree

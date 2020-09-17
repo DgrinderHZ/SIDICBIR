@@ -153,8 +153,20 @@ class CBIR_SIDI(Frame):
         self.entryFolder.grid(row=0, column=1)
         self.btn_browse = Button(self.canva_folder, text="Browse", command=self.browse_button)
         self.btn_browse.grid(row=0, column=2)
+        
+        ######## Type of image selection
+        self.var_typeImg = StringVar()
+        optionList_ti = ('.jpg', '.png')
+        self.canva_typeImg = Canvas(self.dbQueryPanel)
+        self.canva_typeImg.pack()
 
-        self.btn_indexer = Button(self.dbQueryPanel, 
+        self.label_typeImg = Label(self.canva_typeImg, text="Choix du type d'image : ")
+        self.label_typeImg.grid(row=0, column=0)
+        self.var_typeImg.set(optionList_ti[0])
+        self.om = OptionMenu(self.canva_typeImg, self.var_typeImg, *optionList_ti)
+        self.om.grid(row=0, column=1)
+        
+        self.btn_indexer = Button(self.canva_typeImg, 
                                  text="Indexer",
                                  font=('Arial',10,'bold'),
                                  width=10, 
@@ -163,7 +175,7 @@ class CBIR_SIDI(Frame):
                                  fg=self.fgc, 
                                  activebackground=self.abtc,
                                  command=lambda: self.indexer())
-        self.btn_indexer.pack()
+        self.btn_indexer.grid(row=0, column=2, padx=8)
 
         ######## Query image selection
         self.query_path = StringVar()
@@ -393,6 +405,11 @@ class CBIR_SIDI(Frame):
             DESC = Descriptor.getHaralickFeatures
             descDist[0] = "Haralick"
             print("[INFO] DESC = Haralick")
+        elif self.var_desciptor.get() == 'HuMoments':
+            DESC = Descriptor.getHuMoments
+            descDist[0] = "HuMoments"
+            print("[INFO] DESC = HuMoments")
+
         
         if self.var_distance.get() == 'D. Euclidien':
             DIST = Distance.euclid
@@ -422,7 +439,8 @@ class CBIR_SIDI(Frame):
             withIndexBase = True
         else:
             imgFolder = self.folder_path.get()
-        imageFormat = '.jpg'
+        
+        imageFormat = self.var_typeImg.get()
 
         self.imgManager = ImageManager(self.root, DESC, DIST, descDist, imgFolder, imageFormat, withIndexBase)
         self.imageList = self.imgManager.get_imageList()
@@ -440,7 +458,7 @@ class CBIR_SIDI(Frame):
         #im = Image.open(self.selected.filename)
         #queryFeature = Descriptor.getHist(list(im.getdata()))
         queryFeature = []
-        if 'Gabor' in self.imgManager.descDist[0]:
+        if 'Gabor' in self.imgManager.descDist[0] or self.imgManager.descDist[0] == 'HuMoments':
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
             imData = cv2.resize(image, (60, 60))
@@ -478,7 +496,7 @@ class CBIR_SIDI(Frame):
         elif self.basedOn == 2:
             optionList = ('Gabor', 'GaborV', 'Haralick')
         elif self.basedOn == 3:
-            optionList = ('FD', 'DAISY')
+            optionList = ('HuMoments', 'Zernick Moments')
         elif self.basedOn == 4:
             optionList = ('AVGs + Gabor', 'AVGS + FD')
         
