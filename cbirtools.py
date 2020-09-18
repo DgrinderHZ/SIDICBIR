@@ -102,11 +102,24 @@ class Descriptor():
         return list(features.haralick(imgPix, return_mean=True))
     
     #________________________Shape________________________
-    def getHuMoments(gray):
+    def getHuMoments(image):
         # Perform a simple segmentation
-        (T, thresholded) = cv2.threshold(gray, 28, 255, cv2.THRESH_BINARY)
+        #(T, thresholded) = cv2.threshold(gray, 28, 255, cv2.THRESH_BINARY)
+        image[image <= 36] = 0
+        thresh = cv2.copyMakeBorder(image, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value = 0)
+        # invert the image and threshold it
+        #thresh = cv2.bitwise_not(image)
+        thresh[thresh > 0] = 255
+        # initialize the outline image, find the outermost
+        # contours (the outline) of the pokemone, then draw
+        # it
+        outline = np.zeros(image.shape, dtype = "uint8")
+        cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[0]
+        cv2.drawContours(outline, [cnts], -1, 255, -1)
         # return HuMoments
-        return cv2.HuMoments(cv2.moments(thresholded)).flatten()
+        return cv2.HuMoments(cv2.moments(outline)).flatten()
     
 
     def getZernikeMoments(image, radius=21):
@@ -114,10 +127,9 @@ class Descriptor():
         # edges of the pokemon are not up against the borders
         # of the image
         image[image <= 36] = 0
-        image = cv2.copyMakeBorder(image, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value = 0)
+        thresh = cv2.copyMakeBorder(image, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value = 0)
         # invert the image and threshold it
         #thresh = cv2.bitwise_not(image)
-        thresh = image.copy()
         thresh[thresh > 0] = 255
         # initialize the outline image, find the outermost
         # contours (the outline) of the pokemone, then draw

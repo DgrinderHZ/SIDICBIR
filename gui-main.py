@@ -12,7 +12,7 @@ if __name__ == '__main__':
     print(w, h )
     root.geometry("%dx%d+0+0" % (w, h))
     descDist = ["Avgs", "Euclid"]
-    pix = ImageManager(root, Descriptor.getAvgs, Distance.euclid, descDist, "default/", '.jpg')
+    pix = ImageManager(root, Descriptor.getAvgs, Distance.euclid, descDist)
     top = CBIR_SIDI(root, pix, w, h)
     root.mainloop()
 

@@ -1,15 +1,18 @@
 from tkinter import *
+from glob import glob
 from tkinter import filedialog
 from PIL import ImageTk, Image
 from cbirtools import Descriptor, Distance
 from imagemanager import ImageManager
 import cv2
+from csvmanager import readCSV_AVG
 
 class CBIR_SIDI(Frame):
     def __init__(self, root, imageManager, w, h):
         self.w, self.h = w, h
         self.root = root
         self.basedOn = 1
+        self.withIndexBase = False
         # variables
         self.imgManager = imageManager # image manager
         self.imageList = imageManager.get_imageList()
@@ -237,7 +240,7 @@ class CBIR_SIDI(Frame):
 
         ######## Descriptor selection
         self.var_desciptor = StringVar()
-        optionList = ('Moments Statistiques', 'Histogramme', 'Avgs')
+        optionList = ('Moments_Staistiques', 'Histogramme', 'Avgs')
         self.canva_desc = Canvas(self.dbQueryPanel)
         self.canva_desc.pack()
 
@@ -372,19 +375,19 @@ class CBIR_SIDI(Frame):
 
     def indexer(self):
         if self.folder_path.get() == "":
-            print("empty path")
+            print("[INFO] SELECTED FOLDER: empty path")
         else:
-            print(self.folder_path.get())
+            print("[INFO] SELECTED FOLDER: ", self.folder_path.get())
         
         # **************** CHOIX: DESCRIPTOR n DISTANCE *****************
         DESC = Descriptor.getAvgs
         DIST = Distance.euclid
         descDist = ["Avgs", "Euclid"]
 
-        if self.var_desciptor.get() == 'Moments Statistiques':
+        if self.var_desciptor.get() == 'Moments_Staistiques':
             DESC = Descriptor.getMoments
-            descDist[0] = "Moments"
-            print("[INFO] DESC = Moments")
+            descDist[0] = "Moments_Staistiques"
+            print("[INFO] DESC = Moments_Staistiques")
         elif self.var_desciptor.get() == 'Histogramme':
             DESC = Descriptor.getHist
             descDist[0] = "Hist"
@@ -436,17 +439,20 @@ class CBIR_SIDI(Frame):
             descDist[1] = "Manhatan"
             print("[INFO] DIST = Manhatan")
        
-        # TODO: Save Index database related folder
-        imgFolder = self.imgManager.imgFolder
-        withIndexBase = False
+        # TODO: Save Images/Indexes database related folder
+        imgFolder = self.folder_path.get()
         if self.var_choix.get() == "Dossier CSVs : ":
-            withIndexBase = True
-        else:
-            imgFolder = self.folder_path.get()
+            self.withIndexBase = True
+            # Get the folder path from a csv file
+            csvFile = glob(imgFolder+'/*.csv')[0]
+            data = readCSV_AVG(csvFile)
+            self.imgManager.saveRawImagesFolder(data[0])
+            imgFolder = self.imgManager.imgFolder
+            print("[DEBUG] Raw Images Folder", imgFolder)
         
         imageFormat = self.var_typeImg.get()
 
-        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, imgFolder, imageFormat, withIndexBase)
+        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, imgFolder, imageFormat, self.withIndexBase)
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()
@@ -483,7 +489,10 @@ class CBIR_SIDI(Frame):
         self.currentImageList, self.currentPhotoList = [], []
         for img in results:
             if img != 'None':
-                im = Image.open(self.imgManager.imgFolder + "/" + img) #.replace("/", "")
+                if self.withIndexBase:
+                    im = Image.open(img) #.replace("/", "")
+                else:
+                    im = Image.open(self.imgManager.imgFolder + "/" + img) #.replace("/", "")
                 # Resize the image for thumbnails.
                 resized = im.resize((128, 128), Image.ANTIALIAS)
                 photo = ImageTk.PhotoImage(resized)
@@ -502,7 +511,7 @@ class CBIR_SIDI(Frame):
         """
         # initial display photos
         if self.basedOn == 1:
-            optionList = ('Moments Statistiques', 'Histogramme', 'Avgs')
+            optionList = ('Moments_Staistiques', 'Histogramme', 'Avgs')
         elif self.basedOn == 2:
             optionList = ('Gabor', 'GaborV', 'Haralick')
         elif self.basedOn == 3:

@@ -1,14 +1,17 @@
 
-import glob, os
+import  os
+from glob import glob
 from PIL import ImageTk, Image
 from mtree import *
 import cv2
 import csvmanager
 import numpy as np
+from os.path import exists
+from os import mkdir
 
 # Pixel Info class (from sample code)
 class ImageManager:
-    def __init__(self, root, descriptor, distance, descDist, imgFolder, imageFormat, withIndexBase=False):
+    def __init__(self, root, descriptor, distance, descDist, imgFolder="default", imageFormat='.jpg', withIndexBase=False):
         self.root = root
         self.descriptor = descriptor
         self.distance = distance
@@ -31,11 +34,9 @@ class ImageManager:
         ####### Image Database #######
         ##############################
         # Add each image (for evaluation) into a list (from sample code)
-        if withIndexBase:
-            imgFolder = 'default/*' + self.imgFormat
-        else:
-            imgFolder = imgFolder+'/*' + self.imgFormat
-        for infile in glob.glob(imgFolder):
+        imgFolder = imgFolder+'/*' + self.imgFormat
+        print("[DEBUG] Folder to be indexed: ", imgFolder)
+        for infile in glob(imgFolder):
             im = Image.open(infile)
             # Resize the image for thumbnails.
             imSize = im.size
@@ -63,16 +64,18 @@ class ImageManager:
         # look for saved values
         #if os.path.isfile('indexBase.txt'):
         if withIndexBase:
+            print("descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs" or descDist[0] == "Moments" or descDist[0] == "ZernikeMoments"\
+            data = []
+            if descDist[0] == "Avgs" or descDist[0] == "Moments_Staistiques" or descDist[0] == "ZernikeMoments"\
             or "Gabor" in descDist[0] or descDist[0] == "Haralick" or descDist[0] == "HuMoments":
-                for index in glob.glob('indexBase/*.csv'):
+                for index in glob(descDist[0]+'_indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
                     self.addObjectsToTree([data[0], data[1:]])
                     print(".", end= " ")
             elif descDist[0] == "Hist": # Descriptor is Histogram
-                for index in glob.glob('indexBase/*.csv'):
+                for index in glob.glob(descDist[0]+'_indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
                     csvHist = np.array(list(map(np.float32, data[1:])))
@@ -81,23 +84,24 @@ class ImageManager:
                     self.addObjectsToTree([data[0], hist])
                     print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
+            self.saveRawImagesFolder(data[0])
             
 
         # If not already computed, then compute the indexes
         else:
             # Compute
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs" or descDist[0] == "Moments" or descDist[0] == "Haralick":
+            if descDist[0] == "Avgs" or descDist[0] == "Moments_Staistiques" or descDist[0] == "Haralick":
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn, pixList = self.openImage(im)
                     # 2 get descriptor
                     avgs = [float(x) for x in descriptor(pixList)]
                     obj = [fn, avgs]
-                    # 3 Save to desk
-                    self.saveToDesk(obj)
-                    # TODO: 4 Add to M tree
+                    # TODO: 3 Add to M tree
                     self.addObjectsToTree(obj)
+                    # 4 Save to desk
+                    self.saveToDesk([im.filename, avgs])
                     print(".", end= " ")
             elif descDist[0] == "Hist": # Descriptor is Histogram
                 for im in self.imageList[:]:
@@ -105,12 +109,11 @@ class ImageManager:
                     fn, pixList = self.openImage(im)
                     # 2 get descriptor
                     hist = descriptor(pixList)
-                    obj = [fn, hist.flatten()]
-                    # 3 Save to desk
-                    self.saveToDesk(obj)
-                    # TODO: 4 Add to M tree
+                    # TODO: 3 Add to M tree
                     obj = [fn, hist]
                     self.addObjectsToTree(obj)
+                    # 4 Save to desk
+                    self.saveToDesk([im.filename, hist.flatten()])
                     print(".", end= " ")
             elif descDist[0] == "Gabor" or descDist[0] == "GaborV":
                 for im in self.imageList[:]:
@@ -121,10 +124,10 @@ class ImageManager:
                     # 2 get descriptor
                     avgs = [float(x) for x in descriptor(imData)]
                     obj = [fn, avgs]
-                    # 3 Save to desk
-                    self.saveToDesk(obj)
-                    # TODO: 4 Add to M tree
+                    # TODO: 3 Add to M tree
                     self.addObjectsToTree(obj)
+                    # 4 Save to desk
+                    self.saveToDesk([im.filename, avgs])
                     print(".", end= " ")
             elif descDist[0] == "HuMoments" or descDist[0] == "ZernikeMoments":
                 for im in self.imageList[:]:
@@ -135,10 +138,10 @@ class ImageManager:
                     # 2 get descriptor
                     hu = [float(x) for x in descriptor(imData)]
                     obj = [fn, hu]
-                    # 3 Save to desk
-                    self.saveToDesk(obj)
-                    # TODO: 4 Add to M tree
+                    # TODO: 3 Add to M tree
                     self.addObjectsToTree(obj)
+                    # 4 Save to desk
+                    self.saveToDesk([im.filename, hu])
                     print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
 
@@ -151,20 +154,37 @@ class ImageManager:
 
     def saveToDesk(self, obj):
         fn = self.cleanFileName(obj[0])
-        data = [fn] # filename
+        data = [obj[0]] # filepath: Absolute
         data.extend(obj[1]) # avgs, hist, moment, ...
-        csvmanager.writeCSV_AVG('indexBase/'+fn+'.csv', data)
+        folderName = self.descDist[0]+'_indexBase/'
+        if exists(folderName):
+            csvmanager.writeCSV_AVG(folderName+fn+'.csv', data)
+        else:
+            mkdir(folderName)
+            csvmanager.writeCSV_AVG(folderName+fn+'.csv', data)
+
 
     def cleanFileName(self, filename):
         fn = filename
-        p = fn[::-1].find("\\")
+        p = fn.rfind("\\")
         if p != -1:
-            fn = fn[len(fn)-p:]
+            fn = fn[p+1:]
         else:
-            p = fn[::-1].find("/")
+            p = fn.rfind("/")
             if p != -1:
-                fn = fn[len(fn)-p:]
+                fn = fn[p+1:]
         return fn
+    
+    def saveRawImagesFolder(self, fileAbsolutePath):
+        folder = fileAbsolutePath
+        p = folder.rfind("\\")
+        if p != -1:
+            folder = folder[:p]
+        else:
+            p = folder.rfind("/")
+            if p != -1:
+                folder = folder = folder[:p]
+        self.imgFolder = folder
 
     def addObjectsToTree(self, obj):
         self.mtree.add(obj)
