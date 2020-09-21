@@ -29,6 +29,7 @@ class CBIR_SIDI(Frame):
         self.btc = '#15CCF4' # buttons
         self.abtc = '#c6ffeb' # active button
         self.fgc = '#ffffff' # forground
+        self.basedOnC = ["#CF1F1F", "grey", "grey", "grey"]
         self.bth = 5 # button height
         self.currentPage = 0
         self.totalPages = self.get_totalPages()
@@ -43,22 +44,21 @@ class CBIR_SIDI(Frame):
         self.file_menu = Menu(self.mymenu)
         self.mymenu.add_cascade(label="File", menu=self.file_menu)
         self.new_menu = Menu(self.file_menu)
-        self.file_menu.add_cascade(label="File", menu=self.new_menu)
+        self.file_menu.add_cascade(label="New", menu=self.new_menu)
         self.new_menu.add_command(label="Image database", command=self.browse_button)
         self.new_menu.add_command(label="Query image", command=self.browse_buttonQ)
 
-        self.base = Label(self.root, bg="gray")
-        self.base.pack()
-        self.upperFrame = Frame(self.base)
+        
+        self.upperFrame = Frame(self.root)
         self.upperFrame.pack()
 
         self.btn_color = Button(self.upperFrame, 
                                  text="Coulor Based",
                                  font=('Arial',10,'bold'),
-                                 width=41, 
+                                 width=41,  
                                  pady=self.bth, 
                                  border=5, 
-                                 bg=self.btc,
+                                 bg=self.basedOnC[0],
                                  fg=self.fgc, 
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(1))
@@ -67,10 +67,10 @@ class CBIR_SIDI(Frame):
         self.btn_texture = Button(self.upperFrame, 
                                  text="Texture Based",
                                  font=('Arial',10,'bold'),
-                                 width=41, 
+                                 width=40,  
                                  pady=self.bth, 
                                  border=5, 
-                                 bg="#037ffc",
+                                 bg=self.basedOnC[1],
                                  fg=self.fgc, 
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(2))
@@ -79,22 +79,22 @@ class CBIR_SIDI(Frame):
         self.btn_shape = Button(self.upperFrame, 
                                  text="Shape Based",
                                  font=('Arial',10,'bold'),
-                                 width=41, 
+                                 width=40,  
                                  pady=self.bth, 
                                  border=5, 
-                                 bg="#03fca1",
+                                 bg=self.basedOnC[2],
                                  fg=self.fgc, 
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(3))
         self.btn_shape.grid(row=0, column=2)
 
         self.btn_fusion = Button(self.upperFrame, 
-                                 text="Shape Based",
+                                 text="Fusion (Colur+Texture/Shape)",
                                  font=('Arial',10,'bold'),
                                  width=41, 
                                  pady=self.bth, 
                                  border=5, 
-                                 bg="#1cfc03",
+                                 bg=self.basedOnC[3],
                                  fg=self.fgc,  
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(4))
@@ -120,24 +120,26 @@ class CBIR_SIDI(Frame):
 
         # Database control
         self.lbl_dbQueryPanel = Label(self.dbQueryPanel, 
-            text="OPTIONS: REQUETE ET BASES DE DONNEES",
+            text="OPTIONS: INDEXATION ET BASES DE DONNEES (OFFLINE)",
             fg="black",
             width=52,
-            height=2,
+            height=1,
             font=('Arial',10,'bold'))
         self.lbl_dbQueryPanel.pack()
 
         self.var_choix = StringVar()
-        self.canva_BDD = Canvas(self.dbQueryPanel)
+        self.canva_BDD = Canvas(self.dbQueryPanel, bg="white")
         self.canva_BDD.pack()
         self.rdio_ByImages = Radiobutton(self.canva_BDD, 
                                         text="Dossier d'images", 
+                                        bg="white",
                                         variable=self.var_choix,
                                         value="Dossier d'images : ", 
                                         width=25)
 
         self.rdio_ByCSVs = Radiobutton(self.canva_BDD, 
                                         text="Dossier CSVs", 
+                                        bg="white",
                                         variable=self.var_choix,
                                         value="Dossier CSVs : ",
                                         width=25)
@@ -147,29 +149,55 @@ class CBIR_SIDI(Frame):
         
         ######## Folder selection
         self.folder_path = StringVar()
-        self.canva_folder = Canvas(self.dbQueryPanel)
+        self.canva_folder = Canvas(self.dbQueryPanel, bg="white")
         self.canva_folder.pack()
 
-        self.label_folder = Label(self.canva_folder, textvariable=self.var_choix)
+        self.label_folder = Label(self.canva_folder, 
+                                  textvariable=self.var_choix,
+                                  bg="white")
         self.label_folder.grid(row=0, column=0)
         self.entryFolder = Entry(self.canva_folder, width=40, textvariable=self.folder_path)
         self.entryFolder.grid(row=0, column=1)
         self.btn_browse = Button(self.canva_folder, text="Browse", command=self.browse_button)
         self.btn_browse.grid(row=0, column=2)
         
+        #________________________________________________________
+        
+        self.offlineOptions = Canvas(self.dbQueryPanel, bg="white")
+        self.offlineOptions.pack()
+        ######## Descriptor selection
+        self.var_desciptor = StringVar()
+        optionList_desc = ('Moments_Staistiques', 'Histogramme', 'Avgs')
+        self.canva_desc = Canvas(self.offlineOptions, bg="white")
+        self.canva_desc.grid(row=0, column=0)
+
+        self.label_desc = Label(self.canva_desc, 
+                                bg="white",
+                                text="Descripteur : ")
+        self.label_desc.grid(row=0, column=0)
+        self.var_desciptor.set(optionList_desc[0])
+        self.om_descriptor = OptionMenu(self.canva_desc, 
+                            self.var_desciptor,
+                             *optionList_desc
+                    )
+        self.om_descriptor.grid(row=0, column=1)
+        #___________________________________________________________________________#
+        
         ######## Type of image selection
         self.var_typeImg = StringVar()
         optionList_ti = ('.jpg', '.png')
-        self.canva_typeImg = Canvas(self.dbQueryPanel)
-        self.canva_typeImg.pack()
+        self.canva_typeImg = Canvas(self.offlineOptions, bg="white")
+        self.canva_typeImg.grid(row=0, column=1)
 
-        self.label_typeImg = Label(self.canva_typeImg, text="Choix du type d'image : ")
+        self.label_typeImg = Label(self.canva_typeImg, 
+                                    text="Type d'images : ",
+                                    bg="white")
         self.label_typeImg.grid(row=0, column=0)
         self.var_typeImg.set(optionList_ti[0])
-        self.om = OptionMenu(self.canva_typeImg, self.var_typeImg, *optionList_ti)
-        self.om.grid(row=0, column=1)
+        self.om_imgType = OptionMenu(self.canva_typeImg, self.var_typeImg, *optionList_ti)
+        self.om_imgType.grid(row=0, column=1)
         
-        self.btn_indexer = Button(self.canva_typeImg, 
+        self.btn_indexer = Button(self.dbQueryPanel, 
                                  text="Indexer",
                                  font=('Arial',10,'bold'),
                                  width=10, 
@@ -178,21 +206,29 @@ class CBIR_SIDI(Frame):
                                  fg=self.fgc, 
                                  activebackground=self.abtc,
                                  command=lambda: self.indexer())
-        self.btn_indexer.grid(row=0, column=2, padx=8)
+        self.btn_indexer.pack()
 
         ######## Query image selection
+        self.lbl_descriptrs = Label(self.dbQueryPanel, 
+            text="OPTIONS: CHOIX DE REQUETE (ONLINE)",
+            fg="black",
+            width=52, height=1,
+            font=('Arial',10,'bold'))
+        self.lbl_descriptrs.pack()
         self.query_path = StringVar()
-        self.canva_query = Canvas(self.dbQueryPanel)
+        self.canva_query = Canvas(self.dbQueryPanel, bg="white")
         self.canva_query.pack()
 
-        self.label_query = Label(self.canva_query, text="Image requête:")
+        self.label_query = Label(self.canva_query,
+                                bg="white",
+                                text="Image requête:")
         self.label_query.grid(row=0, column=0)
         self.entryQuery = Entry(self.canva_query, width=40, textvariable=self.query_path)
         self.entryQuery.grid(row=0, column=1)
         self.btn_browseQ = Button(self.canva_query, text="Browse", command=self.browse_buttonQ)
         self.btn_browseQ.grid(row=0, column=2)
-
-
+        
+        
         # selected image window
         self.selectedImage = Label(self.dbQueryPanel,
                                    width=320,
@@ -208,7 +244,7 @@ class CBIR_SIDI(Frame):
         self.btn_search = Button(self.canva_btns, 
                                  text="Search",
                                  font=('Arial',10,'bold'),
-                                 width=10, 
+                                 width=15, 
                                  pady=self.bth, 
                                  border=5, 
                                  bg=self.btc,
@@ -220,7 +256,7 @@ class CBIR_SIDI(Frame):
         self.btn_reset = Button(self.canva_btns, 
                                 text="Reset",
                                 font=('Arial',10,'bold'),
-                                width=10, 
+                                width=15, 
                                 pady=self.bth, 
                                 border=5, 
                                 bg="#CF1F1F",
@@ -230,42 +266,23 @@ class CBIR_SIDI(Frame):
         self.btn_reset.grid(row=0, column=1)
         #___________________________________________________________________________#
     
-        self.lbl_descriptrs = Label(self.dbQueryPanel, 
-            text="OPTIONS: CHOIX DE DESCRIPTEUR",
-            fg="black",
-            width=52,
-            height=2,
-            font=('Arial',10,'bold'))
-        self.lbl_descriptrs.pack()
-
-        ######## Descriptor selection
-        self.var_desciptor = StringVar()
-        optionList = ('Moments_Staistiques', 'Histogramme', 'Avgs')
-        self.canva_desc = Canvas(self.dbQueryPanel)
-        self.canva_desc.pack()
-
-        self.label_desc = Label(self.canva_desc, text="Choix du descripteur : ")
-        self.label_desc.grid(row=0, column=0)
-        self.var_desciptor.set(optionList[0])
-        self.om = OptionMenu(self.canva_desc, self.var_desciptor, *optionList)
-        self.om.grid(row=0, column=1)
-        #___________________________________________________________________________#
 
         self.lbl_distances = Label(self.dbQueryPanel, 
             text="OPTIONS: CHOIX DE LA MESURE DE SIMILARITE",
             fg="black",
-            width=52,
-            height=2,
+            width=52, height=1,
             font=('Arial',10,'bold'))
         self.lbl_distances.pack()
 
         ######## Distance selection
         self.var_distance = StringVar()
         optionListD = ('D. Euclidien', 'CHi square', 'Interesect', 'Manhatan')
-        self.canva_dist = Canvas(self.dbQueryPanel)
+        self.canva_dist = Canvas(self.dbQueryPanel, bg="white")
         self.canva_dist.pack()
 
-        self.label_dist = Label(self.canva_dist, text="Choix du distance : ")
+        self.label_dist = Label(self.canva_dist, 
+                                bg="white",
+                                text="Choix du distance : ")
         self.label_dist.grid(row=0, column=0)
         self.var_distance.set(optionListD[0])
         self.omd = OptionMenu(self.canva_dist, self.var_distance, *optionListD)
@@ -277,21 +294,23 @@ class CBIR_SIDI(Frame):
             text="OPTIONS: RECHERCHE M-TREE",
             fg="black",
             width=52,
-            height=2,
+            height=1,
             font=('Arial',10,'bold'))
         self.lbl_search.pack()
 
         self.var_searchMethod = StringVar()
         self.var_searchMethod.set("Le nombre k : ")
-        self.canva_SM = Canvas(self.dbQueryPanel)
+        self.canva_SM = Canvas(self.dbQueryPanel, bg="white")
         self.canva_SM.pack()
         self.knn = Radiobutton(self.canva_SM, 
                                 text="k-NN", 
+                                bg="white",
                                 variable=self.var_searchMethod,
                                 value="Le nombre k : ",
                                 width =25)
         self.rquery = Radiobutton(self.canva_SM, 
                                   text="Range query", 
+                                  bg="white",
                                   variable=self.var_searchMethod,
                                   value="Le rayon r : ",
                                   width =25)
@@ -300,9 +319,11 @@ class CBIR_SIDI(Frame):
 
         self.KRange = IntVar()
         self.KRange.set(10)
-        self.canva_KRange = Canvas(self.dbQueryPanel)
+        self.canva_KRange = Canvas(self.dbQueryPanel, bg="white")
         self.canva_KRange.pack()
-        self.label_KRange = Label(self.canva_KRange, textvariable=self.var_searchMethod)
+        self.label_KRange = Label(self.canva_KRange, 
+                                    bg="white",
+                                    textvariable=self.var_searchMethod)
         self.label_KRange.grid(row=0, column=0)
         self.entryKRange = Spinbox(self.canva_KRange, width=4, from_ = 0, to = 100, textvariable=self.KRange)
         self.entryKRange.grid(row=0, column=1)
@@ -357,6 +378,12 @@ class CBIR_SIDI(Frame):
         
 
     def contentType(self, code):
+        self.basedOnC[code-1], self.basedOnC[self.basedOn-1] = self.basedOnC[self.basedOn-1], self.basedOnC[code-1]
+        self.btn_color.config(bg=self.basedOnC[0])
+        self.btn_texture.config(bg=self.basedOnC[1])
+        self.btn_shape.config(bg=self.basedOnC[2])
+        self.btn_fusion.config(bg=self.basedOnC[3])
+
         self.basedOn = code
         self.reset()
 
@@ -511,18 +538,21 @@ class CBIR_SIDI(Frame):
         """
         # initial display photos
         if self.basedOn == 1:
-            optionList = ('Moments_Staistiques', 'Histogramme', 'Avgs')
+            optionList_desc = ('Moments_Staistiques', 'Histogramme', 'Avgs')
         elif self.basedOn == 2:
-            optionList = ('Gabor', 'GaborV', 'Haralick')
+            optionList_desc = ('Gabor', 'GaborV', 'Haralick')
         elif self.basedOn == 3:
-            optionList = ('HuMoments', 'ZernikeMoments')
+            optionList_desc = ('HuMoments', 'ZernikeMoments')
         elif self.basedOn == 4:
-            optionList = ('AVGs + Gabor', 'AVGS + FD')
+            optionList_desc = ('AVGs + Gabor', 'AVGS + FD')
         
-        self.var_desciptor.set(optionList[0])
-        self.om.destroy()
-        self.om = OptionMenu(self.canva_desc, self.var_desciptor, *optionList)
-        self.om.grid(row=0, column=1)
+        self.var_desciptor.set(optionList_desc[0])
+        self.om_descriptor.destroy()
+
+        self.om_descriptor = OptionMenu(self.canva_desc, 
+                                        self.var_desciptor, 
+                                        *optionList_desc)
+        self.om_descriptor.grid(row=0, column=1)
         
         self.update_preview(self.imageList[0].filename)
         self.currentImageList = self.imageList
