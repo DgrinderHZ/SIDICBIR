@@ -407,62 +407,67 @@ class CBIR_SIDI(Frame):
             print("[INFO] SELECTED FOLDER: ", self.folder_path.get())
         
         # **************** CHOIX: DESCRIPTOR n DISTANCE *****************
-        DESC = ColorDescriptor.getAvgs
-        DIST = Distance.euclid
+        colorDescriptor = ColorDescriptor()
+        textureDescriptor = TextureDescriptor()
+        shapeDescriptor = ShapeDescriptor()
+        distance = Distance()
+
+        DESC = colorDescriptor.getAvgs
+        DIST = distance.euclid
         descDist = ["Avgs", "Euclid"]
 
         if self.var_desciptor.get() == 'Moments_Staistiques':
-            DESC = ColorDescriptor.getMoments
+            DESC = colorDescriptor.getMoments
             descDist[0] = "Moments_Staistiques"
             print("[INFO] DESC = Moments_Staistiques")
         elif self.var_desciptor.get() == 'Histogramme':
-            DESC = Descriptor.getHist
+            DESC = colorDescriptor.getHist
             descDist[0] = "Hist"
             print("[INFO] DESC = Hist")
         elif self.var_desciptor.get() == 'Avgs':
-            DESC = ColorDescriptor.getAvgs
+            DESC = colorDescriptor.getAvgs
             descDist[0] = "Avgs"
             print("[INFO] DESC = Avgs")
         elif self.var_desciptor.get() == 'Gabor':
-            DESC = TextureDescriptor.getGabor
+            DESC = textureDescriptor.getGabor
             descDist[0] = "Gabor"
             print("[INFO] DESC = Gabor")
         elif self.var_desciptor.get() == 'GaborV':
-            DESC = TextureDescriptor.getGaborFeatures
+            DESC = textureDescriptor.getGaborFeatures
             descDist[0] = "GaborV"
             print("[INFO] DESC = GaborV")
         elif self.var_desciptor.get() == 'Haralick':
-            DESC = TextureDescriptor.getHaralickFeatures
+            DESC = textureDescriptor.getHaralickFeatures
             descDist[0] = "Haralick"
             print("[INFO] DESC = Haralick")
         elif self.var_desciptor.get() == 'HuMoments':
-            DESC = ShapeDescriptor.getHuMoments
+            DESC = shapeDescriptor.getHuMoments
             descDist[0] = "HuMoments"
             print("[INFO] DESC = HuMoments")
         elif self.var_desciptor.get() == 'ZernikeMoments':
-            DESC = ShapeDescriptor.getZernikeMoments
+            DESC = shapeDescriptor.getZernikeMoments
             descDist[0] = "ZernikeMoments"
             print("[INFO] DESC = ZernikeMoments")
 
         
         if self.var_distance.get() == 'D. Euclidien':
-            DIST = Distance.euclid
+            DIST = distance.euclid
             descDist[1] = "Euclid"
             print("[INFO] DIST = Euclid")
         elif self.var_distance.get() == 'CHi square':
-            DIST = Distance.chi
+            DIST = distance.chi
             descDist[1] = "Chi2"
             print("[INFO] DIST = CHISQ2")
         elif self.var_distance.get() == 'Interesect':
-            DIST = Distance.intersect
+            DIST = distance.intersect
             descDist[1] = "Intersect"
             print("[INFO] DIST = Intersect")
         elif self.var_distance.get() == 'Interesect':
-            DIST = Distance.intersect
+            DIST = distance.intersect
             descDist[1] = "Intersect"
             print("[INFO] DIST = Intersect")
         elif self.var_distance.get() == 'Manhatan':
-            DIST = Distance.manhatan
+            DIST = distance.manhatan
             descDist[1] = "Manhatan"
             print("[INFO] DIST = Manhatan")
        

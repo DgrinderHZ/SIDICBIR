@@ -120,7 +120,7 @@ class ImageManager:
                     # 1 get image data
                     fn = self.cleanFileName(im.filename)
                     image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    imData = cv2.resize(image, (60, 60))
+                    imData = cv2.resize(image, (32, 32))
                     # 2 get descriptor
                     avgs = [float(x) for x in descriptor(imData)]
                     obj = [fn, avgs]
@@ -134,7 +134,7 @@ class ImageManager:
                     # 1 get image data
                     fn = self.cleanFileName(im.filename)
                     image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    imData = cv2.resize(image, (60, 60))
+                    imData = cv2.resize(image, (32, 32))
                     # 2 get descriptor
                     hu = [float(x) for x in descriptor(imData)]
                     obj = [fn, hu]
@@ -148,7 +148,7 @@ class ImageManager:
     def openImage(self, im):
         fn = self.cleanFileName(im.filename)
         imData = cv2.imread(im.filename.replace("\\","/"))
-        imData = cv2.resize(imData, (60, 60))
+        imData = cv2.resize(imData, (32, 32))
         pixList = list(imData)
         return fn, pixList
 

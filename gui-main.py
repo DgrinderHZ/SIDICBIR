@@ -12,9 +12,11 @@ if __name__ == '__main__':
     print(w, h )
     root.geometry("%dx%d+0+0" % (w, h))
     descDist = ["Avgs", "Euclid"]
-    
+    colorDescriptor = ColorDescriptor()
+    distance = Distance()
+
     root.configure(bg='white')
-    pix = ImageManager(root, ColorDescriptor.getAvgs, Distance.euclid, descDist)
+    pix = ImageManager(root, colorDescriptor.getAvgs, distance.euclid, descDist)
     top = CBIR_SIDI(root, pix, w, h)
     root.mainloop()
 
