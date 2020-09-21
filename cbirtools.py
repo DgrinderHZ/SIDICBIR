@@ -9,7 +9,7 @@ import numpy as np
 import cv2, imutils
 from mahotas import features
 
-class Descriptor():
+class ColorDescriptor():
     """
     Defines methodes for extracting descriptors (indexes)
     """
@@ -38,7 +38,7 @@ class Descriptor():
         height, width, channels = imgPix.shape
         sz = height*width
         
-        mean = Descriptor.getAvgs(imgPix)
+        mean = ColorDescriptor.getAvgs(imgPix)
         v = [0. for _ in range(3)]
         for i in range(len(imgPix)):
             for j in range(len(imgPix[0])):
@@ -48,7 +48,7 @@ class Descriptor():
         v = [ abs((y/sz))**(1/3) for y in v]
         features = []
         features.extend(mean)
-        features.extend(Descriptor.getSTDs(imgPix))
+        features.extend(ColorDescriptor.getSTDs(imgPix))
         features.extend(v)
         return features
     
@@ -64,15 +64,14 @@ class Descriptor():
                             ranges=[0, 256, 0, 256, 0, 256])
 		
         return rbgHist
-    
+
     #_________________________________________________________________________
+class TextureDescriptor:
     def getGabor(image):
         kernel        = cv2.getGaborKernel((21, 21), 8.0, np.pi/4, 10.0, 0.5, 0, ktype=cv2.CV_32F)
         kernel       /= math.sqrt((kernel * kernel).sum())
         filtered_img  = cv2.filter2D(image,    cv2.CV_8UC3, kernel)
         heigth, width = kernel.shape 
-    
-        #cv2.imwrite("{}.jpg".format(1), filtered_img)
         # convert matrix to vector 
         descriptor = cv2.resize(filtered_img, (3*width, 3*heigth), interpolation=cv2.INTER_CUBIC)
         return np.hstack(descriptor)
@@ -87,8 +86,7 @@ class Descriptor():
         return gaborFilters
 
     def getGaborFeatures(image):
-        bank = Descriptor.getGaborFilterBank(31)
-        #image = cv2.imread(image_file, cv2.IMREAD_GRAYSCALE)
+        bank = TextureDescriptor.getGaborFilterBank(31)
         features = []
         for kernel in bank:
             filtred = cv2.filter2D(image, cv2.CV_8UC3, kernel)
@@ -100,19 +98,20 @@ class Descriptor():
     def getHaralickFeatures(imgPix):
         imgPix = np.array(imgPix)
         return list(features.haralick(imgPix, return_mean=True))
-    
-    #________________________Shape________________________
+
+#________________________Shape________________________
+class ShapeDescriptor:
     def getHuMoments(image):
-        # Perform a simple segmentation
-        #(T, thresholded) = cv2.threshold(gray, 28, 255, cv2.THRESH_BINARY)
+        # pad the image with extra white pixels to ensure the
+        # edges are not up against the borders of the image
         image[image <= 36] = 0
         thresh = cv2.copyMakeBorder(image, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value = 0)
-        # invert the image and threshold it
-        #thresh = cv2.bitwise_not(image)
+        # Perform a simple segmentation
+        #(T, thresholded) = cv2.threshold(gray, 28, 255, cv2.THRESH_BINARY)
+        # threshold it
         thresh[thresh > 0] = 255
         # initialize the outline image, find the outermost
-        # contours (the outline) of the pokemone, then draw
-        # it
+        # contours (the outline) , then draw it
         outline = np.zeros(image.shape, dtype = "uint8")
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
@@ -124,16 +123,13 @@ class Descriptor():
 
     def getZernikeMoments(image, radius=21):
         # pad the image with extra white pixels to ensure the
-        # edges of the pokemon are not up against the borders
-        # of the image
+        # edges are not up against the borders of the image
         image[image <= 36] = 0
         thresh = cv2.copyMakeBorder(image, 5, 5, 5, 5, cv2.BORDER_CONSTANT, value = 0)
-        # invert the image and threshold it
-        #thresh = cv2.bitwise_not(image)
+        # threshold it
         thresh[thresh > 0] = 255
         # initialize the outline image, find the outermost
-        # contours (the outline) of the pokemone, then draw
-        # it
+        # contours (the outline) , then draw it
         outline = np.zeros(image.shape, dtype = "uint8")
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
