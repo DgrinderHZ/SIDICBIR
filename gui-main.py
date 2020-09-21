@@ -14,7 +14,7 @@ if __name__ == '__main__':
     descDist = ["Avgs", "Euclid"]
     
     root.configure(bg='white')
-    pix = ImageManager(root, Descriptor.getAvgs, Distance.euclid, descDist)
+    pix = ImageManager(root, ColorDescriptor.getAvgs, Distance.euclid, descDist)
     top = CBIR_SIDI(root, pix, w, h)
     root.mainloop()
 

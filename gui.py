@@ -2,7 +2,7 @@ from tkinter import *
 from glob import glob
 from tkinter import filedialog
 from PIL import ImageTk, Image
-from cbirtools import Descriptor, Distance
+from cbirtools import *
 from imagemanager import ImageManager
 import cv2
 from csvmanager import readCSV_AVG
@@ -407,12 +407,12 @@ class CBIR_SIDI(Frame):
             print("[INFO] SELECTED FOLDER: ", self.folder_path.get())
         
         # **************** CHOIX: DESCRIPTOR n DISTANCE *****************
-        DESC = Descriptor.getAvgs
+        DESC = ColorDescriptor.getAvgs
         DIST = Distance.euclid
         descDist = ["Avgs", "Euclid"]
 
         if self.var_desciptor.get() == 'Moments_Staistiques':
-            DESC = Descriptor.getMoments
+            DESC = ColorDescriptor.getMoments
             descDist[0] = "Moments_Staistiques"
             print("[INFO] DESC = Moments_Staistiques")
         elif self.var_desciptor.get() == 'Histogramme':
@@ -420,27 +420,27 @@ class CBIR_SIDI(Frame):
             descDist[0] = "Hist"
             print("[INFO] DESC = Hist")
         elif self.var_desciptor.get() == 'Avgs':
-            DESC = Descriptor.getAvgs
+            DESC = ColorDescriptor.getAvgs
             descDist[0] = "Avgs"
             print("[INFO] DESC = Avgs")
         elif self.var_desciptor.get() == 'Gabor':
-            DESC = Descriptor.getGabor
+            DESC = TextureDescriptor.getGabor
             descDist[0] = "Gabor"
             print("[INFO] DESC = Gabor")
         elif self.var_desciptor.get() == 'GaborV':
-            DESC = Descriptor.getGaborFeatures
+            DESC = TextureDescriptor.getGaborFeatures
             descDist[0] = "GaborV"
             print("[INFO] DESC = GaborV")
         elif self.var_desciptor.get() == 'Haralick':
-            DESC = Descriptor.getHaralickFeatures
+            DESC = TextureDescriptor.getHaralickFeatures
             descDist[0] = "Haralick"
             print("[INFO] DESC = Haralick")
         elif self.var_desciptor.get() == 'HuMoments':
-            DESC = Descriptor.getHuMoments
+            DESC = ShapeDescriptor.getHuMoments
             descDist[0] = "HuMoments"
             print("[INFO] DESC = HuMoments")
         elif self.var_desciptor.get() == 'ZernikeMoments':
-            DESC = Descriptor.getZernikeMoments
+            DESC = ShapeDescriptor.getZernikeMoments
             descDist[0] = "ZernikeMoments"
             print("[INFO] DESC = ZernikeMoments")
 
@@ -491,9 +491,6 @@ class CBIR_SIDI(Frame):
         self.totalPages = self.get_totalPages()
 
     def find(self):
-        # TODO: use cv2
-        #im = Image.open(self.selected.filename)
-        #queryFeature = Descriptor.getHist(list(im.getdata()))
         queryFeature = []
         if self.imgManager.descDist[0] == 'ZernikeMoments':
             # 1 get image data
