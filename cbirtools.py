@@ -200,13 +200,6 @@ class ShapeDescriptor:
         return features.zernike_moments(outline, radius)
 
 
-
-
-
-
-
-
-
 class Distance():
     """
     Defines different distances to use!
@@ -251,6 +244,42 @@ class Distance():
         h1 = obj[1]
         h2 = query[1]
         return cv2.compareHist(h1, h2, cv2.HISTCMP_INTERSECT)
+
+
+
+class FusionDescriptors():
+    
+    def __init__(self, fw, sw):
+        self.firstWeight = fw
+        self.secondWeight = sw
+        self.color = ColorDescriptor()
+        self.texture = TextureDescriptor()
+        self.shape = ShapeDescriptor()
+    
+    def getMomentsAndGabor(self, image, gray):
+        combinedFeatures = []
+        combinedFeatures.extend(self.color.getMoments(image)) 
+        combinedFeatures.extend(self.texture.getGabor(gray))
+        return combinedFeatures
+    
+    def getMomentsAndZernike(self, image, gray):
+        combinedFeatures = []
+        combinedFeatures.extend(self.color.getMoments(image)) 
+        combinedFeatures.extend(self.shape.getZernikeMoments(gray))
+        return combinedFeatures
+        
+    def manhatanDistance(self, obj, query):
+        obj, query = obj[1], query[1]
+        # Color feature distace
+        cfd = 0
+        for i in range(9):
+            cfd += abs(obj[i]-query[i])
+        # Texture/Shape feature distace
+        tsfd = 0
+        for i in range(10, len(obj)):
+            tsfd += abs(obj[i]-query[i])
+
+        return (self.firstWeight * cfd + self.secondWeight * tsfd)
 
 
 #print(Descriptor.getAvgs([(2, 1, 3), (1,1,1)]))

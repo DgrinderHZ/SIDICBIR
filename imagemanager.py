@@ -67,14 +67,7 @@ class ImageManager:
             print("descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
             print("[INFO]-- Adding Images to the tree")
             data = []
-            if descDist[0] == "Avgs" or descDist[0] == "Moments_Staistiques" or descDist[0] == "ZernikeMoments"\
-            or "Gabor" in descDist[0] or descDist[0] == "Haralick" or descDist[0] == "HuMoments":
-                for index in glob(descDist[0]+'_indexBase/*.csv'):
-                    data = csvmanager.readCSV_AVG(index)
-                    # TODO: Add to M tree
-                    self.addObjectsToTree([data[0], data[1:]])
-                    print(".", end= " ")
-            elif descDist[0] == "Hist": # Descriptor is Histogram
+            if descDist[0] == "Hist": # Descriptor is Histogram
                 for index in glob.glob(descDist[0]+'_indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
@@ -82,6 +75,12 @@ class ImageManager:
                     #print(csvHist)
                     hist = np.reshape(csvHist, (17, 17, 17))
                     self.addObjectsToTree([data[0], hist])
+                    print(".", end= " ")
+            else:
+                for index in glob(descDist[0]+'_indexBase/*.csv'):
+                    data = csvmanager.readCSV_AVG(index)
+                    # TODO: Add to M tree
+                    self.addObjectsToTree([data[0], data[1:]])
                     print(".", end= " ")
             print("\n[INFO]-- Insertion completed.")
             self.saveRawImagesFolder(data[0])
@@ -143,6 +142,22 @@ class ImageManager:
                     # 4 Save to desk
                     self.saveToDesk([im.filename, hu])
                     print(".", end= " ")
+            elif descDist[0] == "MomentsStat + Gabor" or descDist[0] == "MomentsStat + Zernike":
+                for im in self.imageList[:]:
+                    # 1 get image data
+                    fn, pixList = self.openImage(im)
+                    fn = self.cleanFileName(im.filename)
+                    image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                    grayImgData = cv2.resize(image, (32, 32))
+                    # 2 get descriptor
+                    hu = [float(x) for x in descriptor(pixList, grayImgData)]
+                    obj = [fn, hu]
+                    # TODO: 3 Add to M tree
+                    self.addObjectsToTree(obj)
+                    # 4 Save to desk
+                    self.saveToDesk([im.filename, hu])
+                    print(".", end= " ")
+          
             print("\n[INFO]-- Insertion completed.")
 
     def openImage(self, im):

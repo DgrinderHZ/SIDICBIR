@@ -276,7 +276,7 @@ class CBIR_SIDI(Frame):
 
         ######## Distance selection
         self.var_distance = StringVar()
-        optionListD = ('D. Euclidien', 'CHi square', 'Interesect', 'Manhatan')
+        optionListD = ('D. Euclidien', 'CHi square', 'Interesect', 'Manhatan', 'ManhatanFusion')
         self.canva_dist = Canvas(self.dbQueryPanel, bg="white")
         self.canva_dist.pack()
 
@@ -410,6 +410,7 @@ class CBIR_SIDI(Frame):
         colorDescriptor = ColorDescriptor()
         textureDescriptor = TextureDescriptor()
         shapeDescriptor = ShapeDescriptor()
+        fusionDescriptors = FusionDescriptors(0.5, 0.5)
         distance = Distance()
 
         DESC = colorDescriptor.getAvgs
@@ -448,6 +449,14 @@ class CBIR_SIDI(Frame):
             DESC = shapeDescriptor.getZernikeMoments
             descDist[0] = "ZernikeMoments"
             print("[INFO] DESC = ZernikeMoments")
+        elif self.var_desciptor.get() == "MomentsStat + Gabor":
+            DESC = fusionDescriptors.getMomentsAndGabor
+            descDist[0] = "MomentsStat + Gabor"
+            print("[INFO] DESC = MomentsAndGabor")
+        elif self.var_desciptor.get() == "MomentsStat + Zernike":
+            DESC = fusionDescriptors.getMomentsAndZernike
+            descDist[0] = "MomentsStat + Zernike"
+            print("[INFO] DESC = MomentsAndZernike")
 
         
         if self.var_distance.get() == 'D. Euclidien':
@@ -470,6 +479,11 @@ class CBIR_SIDI(Frame):
             DIST = distance.manhatan
             descDist[1] = "Manhatan"
             print("[INFO] DIST = Manhatan")
+        elif self.var_distance.get() == 'ManhatanFusion':
+            DIST = fusionDescriptors.manhatanDistance
+            descDist[1] = "ManhatanFusion"
+            print("[INFO] DIST = ManhatanFusion")
+        
        
         # TODO: Save Images/Indexes database related folder
         imgFolder = self.folder_path.get()
@@ -500,18 +514,26 @@ class CBIR_SIDI(Frame):
         if self.imgManager.descDist[0] == 'ZernikeMoments':
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-            imData = cv2.resize(image, (60, 60))
+            imData = cv2.resize(image, (32, 32))
             # 2 get descriptor
             queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
+        elif self.imgManager.descDist[0] == "MomentsStat + Gabor" or self.imgManager.descDist[0] == "MomentsStat + Zernike":
+            # 1 get image data
+            path = self.selected.filename.replace("\\","/")
+            fn, pixList = self.imgManager.openImage(self.selected)
+            image  = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            grayImgData = cv2.resize(image, (32, 32))
+            # 2 get descriptor
+            queryFeature  = [float(x) for x in self.imgManager.descriptor(pixList, grayImgData)]
         elif 'Gabor' in self.imgManager.descDist[0] or self.imgManager.descDist[0] == 'HuMoments':
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-            imData = cv2.resize(image, (60, 60))
+            imData = cv2.resize(image, (32, 32))
             # 2 get descriptor
             queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
         else:
             im = cv2.imread(self.selected.filename)
-            im = cv2.resize(im, (60, 60))
+            im = cv2.resize(im, (32, 32))
             queryFeature = self.imgManager.descriptor(list(im))
         
         results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
@@ -546,7 +568,7 @@ class CBIR_SIDI(Frame):
         elif self.basedOn == 3:
             optionList_desc = ('HuMoments', 'ZernikeMoments')
         elif self.basedOn == 4:
-            optionList_desc = ('AVGs + Gabor', 'AVGS + FD')
+            optionList_desc = ('MomentsStat + Gabor', 'MomentsStat + Zernike')
         
         self.var_desciptor.set(optionList_desc[0])
         self.om_descriptor.destroy()
