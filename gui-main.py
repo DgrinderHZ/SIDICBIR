@@ -10,7 +10,7 @@ if __name__ == '__main__':
     #root.attributes('-fullscreen', True)
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     print(w, h )
-    root.geometry("%dx%d+0+0" % (w, h))
+    root.geometry("%dx%d" % (w, h))
     descDist = ["Avgs", "Euclid"]
     colorDescriptor = ColorDescriptor()
     distance = Distance()

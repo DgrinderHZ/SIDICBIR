@@ -60,7 +60,7 @@ class CBIR_SIDI(Frame):
 
         self.view_menu = Menu(self.mymenu, tearoff=False)
         self.mymenu.add_cascade(label="Fenêtre", menu=self.view_menu)
-        self.view_menu.add_command(label="Mesurer la qualité", command=command=lambda: self.mesurer())
+        self.view_menu.add_command(label="Mesurer la qualité", command=lambda: self.mesurer())
         
         self.desc_menu = Menu(self.view_menu, tearoff=False)
         self.view_menu.add_cascade(label="Descripteurs", menu=self.desc_menu)
@@ -76,7 +76,7 @@ class CBIR_SIDI(Frame):
         self.upperFrame.pack()
 
         self.btn_color = Button(self.upperFrame, 
-                                 text="Coulor Based",
+                                 text="Basé Couleur",
                                  font=('Arial',10,'bold'),
                                  width=41,  
                                  pady=self.bth, 
@@ -88,7 +88,7 @@ class CBIR_SIDI(Frame):
         self.btn_color.grid(row=0, column=0)
 
         self.btn_texture = Button(self.upperFrame, 
-                                 text="Texture Based",
+                                 text="Basé Texture",
                                  font=('Arial',10,'bold'),
                                  width=40,  
                                  pady=self.bth, 
@@ -100,7 +100,7 @@ class CBIR_SIDI(Frame):
         self.btn_texture.grid(row=0, column=1)
 
         self.btn_shape = Button(self.upperFrame, 
-                                 text="Shape Based",
+                                 text="Basé Forme",
                                  font=('Arial',10,'bold'),
                                  width=40,  
                                  pady=self.bth, 
@@ -112,7 +112,7 @@ class CBIR_SIDI(Frame):
         self.btn_shape.grid(row=0, column=2)
 
         self.btn_fusion = Button(self.upperFrame, 
-                                 text="Fusion (Colur+Texture/Shape)",
+                                 text="Fusion (Combinaison)",
                                  font=('Arial',10,'bold'),
                                  width=41, 
                                  pady=self.bth, 
@@ -348,14 +348,16 @@ class CBIR_SIDI(Frame):
         self.rquery.grid(row=0, column=1)
 
         self.KRange = IntVar()
-        self.KRange.set(10)
+        self.KRange.set(50)
         self.canva_KRange = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_KRange.pack()
         self.label_KRange = Label(self.canva_KRange, 
                                     bg=self.bgc,
                                     textvariable=self.var_searchMethod)
         self.label_KRange.grid(row=0, column=0)
-        self.entryKRange = Spinbox(self.canva_KRange, width=4, from_ = 0, to = 100, textvariable=self.KRange)
+        self.entryKRange = Spinbox(self.canva_KRange, width=4, 
+                                    from_ = 0, to = 100, 
+                                    textvariable=self.KRange)
         self.entryKRange.grid(row=0, column=1)
 
 
@@ -408,7 +410,99 @@ class CBIR_SIDI(Frame):
         
     def mesurer(self):
         mesurUI = Toplevel(self.root)
+        mesurUI.geometry("400x600")
+
+        self.positif = IntVar()
+        self.positif.set(10)
+        self.canvaPositif = Canvas(mesurUI, bg=self.bgc)
+        self.canvaPositif.pack()
+        self.labelPositif = Label(self.canvaPositif, 
+                                    bg=self.bgc,
+                                    text="Nombre total d'images pertinentes:")
+        self.labelPositif.grid(row=0, column=0)
+        self.entryPositif = Spinbox(self.canvaPositif, width=4, from_ = 0, to = 100, textvariable=self.positif)
+        self.entryPositif.grid(row=0, column=1)
+        
+        self.vp = IntVar()
+        self.vp.set(10)
+        self.VPCanva = Canvas(mesurUI, bg=self.bgc)
+        self.VPCanva.pack()
+        self.VPLabel = Label(self.VPCanva, 
+                                    bg=self.bgc,
+                                    text="Nombre d'images pertinentes retrouvées:")
+        self.VPLabel.grid(row=0, column=0)
+        self.VPEntry = Spinbox(self.VPCanva, width=4, from_ = 0, to = 100, textvariable=self.vp)
+        self.VPEntry.grid(row=0, column=1)
+
+        self.found = IntVar()
+        try:
+            self.found.set(self.resultsLenght)
+        except AttributeError:
+            pass
+        self.foundCanva = Canvas(mesurUI, bg=self.bgc)
+        self.foundCanva.pack()
+        self.foundLabel = Label(self.foundCanva, 
+                                    bg=self.bgc,
+                                    text="Nombre total d'images retrouvées:")
+        self.foundLabel.grid(row=0, column=0)
+        self.foundEntry = Spinbox(self.foundCanva, width=4, 
+                               from_ = 0, to = 100, 
+                               textvariable=self.found)
+        self.foundEntry.grid(row=0, column=1)
+
+        self.btn_calcul = Button(mesurUI, 
+                                 text="Calculer!",
+                                 font=('Arial',10,'bold'),
+                                 width=40,  
+                                 pady=self.bth, 
+                                 border=5, 
+                                 bg=self.btc,
+                                 fg=self.fgc, 
+                                 activebackground=self.abtc,
+                                 command=lambda: self.getQualityMeasures(mesurUI))
+        self.btn_calcul.pack()
+
+
         mesurUI.mainloop()
+
+    def getQualityMeasures(self, view):
+        recall = self.vp.get() / self.positif.get()
+        precision = self.vp.get() / self.found.get()
+        F_score = 2*recall*precision /(recall+precision)
+
+        self.table = Canvas(view)
+        self.table.pack(pady=10)
+        lst = [["Rappel", "Précision", "F-mesure"], list(map(lambda x: round(x, 4), [recall, precision, F_score]))]
+        self.Table(self.table, lst , bg="white")
+        
+    
+    def Table(self, canva, lst, bg):
+        # code for creating table
+        total_rows = 2
+        total_columns = 3
+        self.e = ""
+        for i in range(total_rows):
+            for j in range(total_columns):
+                if i == 0:
+                    self.e = Entry(canva, width=16, 
+                                    fg='white', 
+                                    font=('Arial',10,'bold'), 
+                                    justify='center',
+                                    bg="gray")
+                else:
+                    self.e = Entry(canva, width=16, 
+                                    fg='blue', 
+                                    font=('Arial',10,'bold'), 
+                                    justify='center',bg=bg)
+                self.e.grid(row=i, column=j)
+                self.e.insert(END, lst[i][j])
+
+
+
+
+        
+
+        
 
     def contentType(self, code):
         self.basedOnC[code-1], self.basedOnC[self.basedOn-1] = self.basedOnC[self.basedOn-1], self.basedOnC[code-1]
@@ -443,8 +537,6 @@ class CBIR_SIDI(Frame):
         colorDescriptor = ColorDescriptor()
         textureDescriptor = TextureDescriptor()
         shapeDescriptor = ShapeDescriptor()
-        print("[INFO] Weights: ", self.w1.get(), self.w2.get())
-        fusionDescriptors = FusionDescriptors(self.w1.get(), self.w2.get())
         distance = Distance()
 
         DESC = colorDescriptor.getAvgs
@@ -484,6 +576,7 @@ class CBIR_SIDI(Frame):
             descDist[0] = "ZernikeMoments"
             print("[INFO] DESC = ZernikeMoments")
         elif self.var_desciptor.get() == "MomentsStat + Gabor":
+            fusionDescriptors = FusionDescriptors(self.w1.get(), self.w2.get())
             DESC = fusionDescriptors.getMomentsAndGabor
             descDist[0] = "MomentsStat + Gabor"
             print("[INFO] DESC = MomentsAndGabor")
@@ -572,8 +665,10 @@ class CBIR_SIDI(Frame):
         
         results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
         self.currentImageList, self.currentPhotoList = [], []
+        self.resultsLenght = 0
         for img in results:
             if img != 'None':
+                self.resultsLenght += 1
                 if self.withIndexBase:
                     im = Image.open(img) #.replace("/", "")
                 else:
