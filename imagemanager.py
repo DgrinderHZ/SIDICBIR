@@ -11,13 +11,30 @@ from os import mkdir
 
 # Pixel Info class (from sample code)
 class ImageManager:
-    def __init__(self, root, descriptor, distance, descDist, imgFolder="default", imageFormat='.jpg', withIndexBase=False):
+    def __init__(self, root, descriptor, distance, descDist, imgSize=(32, 32), imgFolder="default", imageFormat='.jpg', withIndexBase=False):
         self.root = root
+        self.imgSize = imgSize
         self.descriptor = descriptor
         self.distance = distance
         self.imgFolder = imgFolder
         self.descDist = descDist
         self.imgFormat = imageFormat
+
+        # CONSTANTS
+        self.MOYENNE_STATISTIQUES = "Moyenne Statistiques"
+        self.MOMENTS_STATISTIQUES = "Moments Statistiques"
+        self.HISTOGRAMME_RGB = "Histogramme RGB"
+        self.HISTOGRAMME_HSV = "Histogramme HSV"
+
+        self.GABOR = "Filtre de Gabor"
+        self.HARALICK = "Mesures de Haralick"
+
+        self.MOMENTS_HU = "Moments de HU"
+        self.MOMENTS_ZERNIKE = "Moments de Zernike"
+
+        self.COLOR_TEXTURE = "Couleur et Texture"
+        self.COLOR_SHAPE = "Couleur et Forme"
+
         ##############################
         ########### Mtree ############
         ##############################
@@ -67,7 +84,7 @@ class ImageManager:
             print("descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
             print("[INFO]-- Adding Images to the tree")
             data = []
-            if descDist[0] == "Hist": # Descriptor is Histogram
+            if descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
                 for index in glob.glob(descDist[0]+'_indexBase/*.csv'):
                     data = csvmanager.readCSV_AVG(index)
                     # TODO: Add to M tree
@@ -90,7 +107,9 @@ class ImageManager:
         else:
             # Compute
             print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == "Avgs" or descDist[0] == "Moments_Staistiques" or descDist[0] == "Haralick":
+            if descDist[0] == self.MOYENNE_STATISTIQUES or\
+                 descDist[0] == self.MOMENTS_STATISTIQUES or\
+                      descDist[0] == self.HARALICK:
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn, pixList = self.openImage(im)
@@ -102,7 +121,7 @@ class ImageManager:
                     # 4 Save to desk
                     self.saveToDesk([im.filename, avgs])
                     print(".", end= " ")
-            elif descDist[0] == "Hist": # Descriptor is Histogram
+            elif descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn, pixList = self.openImage(im)
@@ -114,12 +133,12 @@ class ImageManager:
                     # 4 Save to desk
                     self.saveToDesk([im.filename, hist.flatten()])
                     print(".", end= " ")
-            elif descDist[0] == "Gabor" or descDist[0] == "GaborV":
+            elif descDist[0] == "Gabor" or descDist[0] == self.GABOR:
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn = self.cleanFileName(im.filename)
                     image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    imData = cv2.resize(image, (32, 32))
+                    imData = cv2.resize(image, self.imgSize)
                     # 2 get descriptor
                     avgs = [float(x) for x in descriptor(imData)]
                     obj = [fn, avgs]
@@ -128,12 +147,12 @@ class ImageManager:
                     # 4 Save to desk
                     self.saveToDesk([im.filename, avgs])
                     print(".", end= " ")
-            elif descDist[0] == "HuMoments" or descDist[0] == "ZernikeMoments":
+            elif descDist[0] == self.MOMENTS_HU or descDist[0] == self.MOMENTS_ZERNIKE:
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn = self.cleanFileName(im.filename)
                     image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    imData = cv2.resize(image, (32, 32))
+                    imData = cv2.resize(image, self.imgSize)
                     # 2 get descriptor
                     hu = [float(x) for x in descriptor(imData)]
                     obj = [fn, hu]
@@ -142,13 +161,13 @@ class ImageManager:
                     # 4 Save to desk
                     self.saveToDesk([im.filename, hu])
                     print(".", end= " ")
-            elif descDist[0] == "MomentsStat + Gabor" or descDist[0] == "MomentsStat + Zernike":
+            elif descDist[0] == self.COLOR_TEXTURE or descDist[0] == self.COLOR_SHAPE:
                 for im in self.imageList[:]:
                     # 1 get image data
                     fn, pixList = self.openImage(im)
                     fn = self.cleanFileName(im.filename)
                     image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    grayImgData = cv2.resize(image, (32, 32))
+                    grayImgData = cv2.resize(image, self.imgSize)
                     # 2 get descriptor
                     hu = [float(x) for x in descriptor(pixList, grayImgData)]
                     obj = [fn, hu]
@@ -163,7 +182,7 @@ class ImageManager:
     def openImage(self, im):
         fn = self.cleanFileName(im.filename)
         imData = cv2.imread(im.filename.replace("\\","/"))
-        imData = cv2.resize(imData, (32, 32))
+        imData = cv2.resize(imData, self.imgSize)
         pixList = list(imData)
         return fn, pixList
 

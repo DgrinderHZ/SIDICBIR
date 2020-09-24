@@ -18,6 +18,7 @@ class CBIR_SIDI(Frame):
         self.imageList = imageManager.get_imageList()
         self.photoList = imageManager.get_photoList()
         self.indexBase = imageManager.getIndexBase()
+        self.imgSize = (32, 32)
 
         self.xmax = imageManager.get_xmax() + 20
         self.ymax = imageManager.get_ymax() + 10
@@ -34,6 +35,29 @@ class CBIR_SIDI(Frame):
         self.currentPage = 0
         self.totalPages = self.get_totalPages()
         self.weights = []
+
+        # CONSTANTS
+        self.MOYENNE_STATISTIQUES = "Moyenne Statistiques"
+        self.MOMENTS_STATISTIQUES = "Moments Statistiques"
+        self.HISTOGRAMME_RGB = "Histogramme RGB"
+        self.HISTOGRAMME_HSV = "Histogramme HSV"
+
+        self.GABOR = "Filtre de Gabor"
+        self.HARALICK = "Mesures de Haralick"
+
+        self.MOMENTS_HU = "Moments de HU"
+        self.MOMENTS_ZERNIKE = "Moments de Zernike"
+
+        self.COLOR_TEXTURE = "Couleur et Texture"
+        self.COLOR_SHAPE = "Couleur et Forme"
+
+        self.EUCLIDIEN = "Euclidienne"
+        self.MANHATAN = "Manhatan"
+        self.CHISQRT = "CHI Square"
+        self.INTERSECTION = "Intersection Hist"
+        self.MANHATAN_FUSION = "Manhatan (Fusion)"
+        self.EUCLID_FUSION = "Euclidienne (Fusion)"
+        
 
         # main frame
         #self.mainframe = Frame(root, bg=self.bgc, width=1366,  height=768)
@@ -196,7 +220,10 @@ class CBIR_SIDI(Frame):
         self.offlineOptions.pack()
         ######## Descriptor selection
         self.var_desciptor = StringVar()
-        optionList_desc = ('Moments_Staistiques', 'Histogramme', 'Avgs')
+        optionList_desc = (self.MOYENNE_STATISTIQUES,
+                           self.MOMENTS_STATISTIQUES,
+                           self.HISTOGRAMME_RGB,
+                           self.HISTOGRAMME_HSV)
         self.canva_desc = Canvas(self.offlineOptions, bg=self.bgc)
         self.canva_desc.grid(row=0, column=0)
 
@@ -236,7 +263,10 @@ class CBIR_SIDI(Frame):
 
         ######## Distance selection
         self.var_distance = StringVar()
-        optionListD = ('D. Euclidien', 'CHi square', 'Interesect', 'Manhatan', 'ManhatanFusion')
+        optionListD = (self.MANHATAN,
+                      self.EUCLIDIEN,
+                       self.CHISQRT, 
+                       self.INTERSECTION)
         self.canva_dist = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_dist.pack()
 
@@ -528,6 +558,7 @@ class CBIR_SIDI(Frame):
         self.update_preview(filename)
 
     def indexer(self):
+        #TODO: Add pop up window
         if self.folder_path.get() == "":
             print("[INFO] SELECTED FOLDER: empty path")
         else:
@@ -541,76 +572,59 @@ class CBIR_SIDI(Frame):
 
         DESC = colorDescriptor.getAvgs
         DIST = distance.euclid
-        descDist = ["Avgs", "Euclid"]
+        descDist = [self.MOYENNE_STATISTIQUES, self.EUCLIDIEN]
 
-        if self.var_desciptor.get() == 'Moments_Staistiques':
+        if self.var_desciptor.get() == self.MOMENTS_STATISTIQUES:
             DESC = colorDescriptor.getMoments
-            descDist[0] = "Moments_Staistiques"
-            print("[INFO] DESC = Moments_Staistiques")
-        elif self.var_desciptor.get() == 'Histogramme':
+            descDist[0] = self.MOMENTS_STATISTIQUES
+        elif self.var_desciptor.get() == self.HISTOGRAMME_RGB:
             DESC = colorDescriptor.getHist
-            descDist[0] = "Hist"
-            print("[INFO] DESC = Hist")
-        elif self.var_desciptor.get() == 'Avgs':
+            descDist[0] = self.HISTOGRAMME_RGB
+        elif self.var_desciptor.get() == self.MOYENNE_STATISTIQUES:
             DESC = colorDescriptor.getAvgs
-            descDist[0] = "Avgs"
-            print("[INFO] DESC = Avgs")
+            descDist[0] = self.MOYENNE_STATISTIQUES
         elif self.var_desciptor.get() == 'Gabor':
             DESC = textureDescriptor.getGabor
             descDist[0] = "Gabor"
-            print("[INFO] DESC = Gabor")
-        elif self.var_desciptor.get() == 'GaborV':
+        elif self.var_desciptor.get() == self.GABOR:
             DESC = textureDescriptor.getGaborFeatures
-            descDist[0] = "GaborV"
-            print("[INFO] DESC = GaborV")
-        elif self.var_desciptor.get() == 'Haralick':
+            descDist[0] = self.GABOR
+        elif self.var_desciptor.get() == self.HARALICK:
             DESC = textureDescriptor.getHaralickFeatures
-            descDist[0] = "Haralick"
-            print("[INFO] DESC = Haralick")
-        elif self.var_desciptor.get() == 'HuMoments':
+            descDist[0] = self.HARALICK
+        elif self.var_desciptor.get() == self.MOMENTS_HU:
             DESC = shapeDescriptor.getHuMoments
-            descDist[0] = "HuMoments"
-            print("[INFO] DESC = HuMoments")
-        elif self.var_desciptor.get() == 'ZernikeMoments':
+            descDist[0] = self.MOMENTS_HU
+        elif self.var_desciptor.get() == self.MOMENTS_ZERNIKE:
             DESC = shapeDescriptor.getZernikeMoments
-            descDist[0] = "ZernikeMoments"
-            print("[INFO] DESC = ZernikeMoments")
-        elif self.var_desciptor.get() == "MomentsStat + Gabor":
+            descDist[0] = self.MOMENTS_ZERNIKE
+        elif self.var_desciptor.get() == self.COLOR_TEXTURE:
             fusionDescriptors = FusionDescriptors(self.w1.get(), self.w2.get())
             DESC = fusionDescriptors.getMomentsAndGabor
-            descDist[0] = "MomentsStat + Gabor"
-            print("[INFO] DESC = MomentsAndGabor")
-        elif self.var_desciptor.get() == "MomentsStat + Zernike":
+            descDist[0] = self.COLOR_TEXTURE
+        elif self.var_desciptor.get() == self.COLOR_SHAPE:
             DESC = fusionDescriptors.getMomentsAndZernike
-            descDist[0] = "MomentsStat + Zernike"
-            print("[INFO] DESC = MomentsAndZernike")
+            descDist[0] = self.COLOR_SHAPE
 
         
-        if self.var_distance.get() == 'D. Euclidien':
+        if self.var_distance.get() == self.EUCLIDIEN:
             DIST = distance.euclid
-            descDist[1] = "Euclid"
-            print("[INFO] DIST = Euclid")
-        elif self.var_distance.get() == 'CHi square':
+            descDist[1] = self.EUCLIDIEN
+        elif self.var_distance.get() == self.CHISQRT:
             DIST = distance.chi
-            descDist[1] = "Chi2"
-            print("[INFO] DIST = CHISQ2")
-        elif self.var_distance.get() == 'Interesect':
+            descDist[1] = self.CHISQRT
+        elif self.var_distance.get() == self.INTERSECTION:
             DIST = distance.intersect
-            descDist[1] = "Intersect"
-            print("[INFO] DIST = Intersect")
-        elif self.var_distance.get() == 'Interesect':
-            DIST = distance.intersect
-            descDist[1] = "Intersect"
-            print("[INFO] DIST = Intersect")
-        elif self.var_distance.get() == 'Manhatan':
+            descDist[1] = self.INTERSECTION
+        elif self.var_distance.get() == self.MANHATAN:
             DIST = distance.manhatan
-            descDist[1] = "Manhatan"
-            print("[INFO] DIST = Manhatan")
-        elif self.var_distance.get() == 'ManhatanFusion':
+            descDist[1] = self.MANHATAN
+        elif self.var_distance.get() == self.MANHATAN_FUSION:
             DIST = fusionDescriptors.manhatanDistance
-            descDist[1] = "ManhatanFusion"
-            print("[INFO] DIST = ManhatanFusion")
+            descDist[1] = self.MANHATAN_FUSION
         
+        print("[INFO] DESC = ", descDist[0])
+        print("[INFO] DIST = ", descDist[1])
        
         # TODO: Save Images/Indexes database related folder
         imgFolder = self.folder_path.get()
@@ -625,7 +639,7 @@ class CBIR_SIDI(Frame):
         
         imageFormat = self.var_typeImg.get()
 
-        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, imgFolder, imageFormat, self.withIndexBase)
+        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, self.imgSize, imgFolder, imageFormat, self.withIndexBase)
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()
@@ -638,29 +652,30 @@ class CBIR_SIDI(Frame):
 
     def find(self):
         queryFeature = []
-        if self.imgManager.descDist[0] == 'ZernikeMoments':
+        if self.imgManager.descDist[0] == self.MOMENTS_ZERNIKE:
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-            imData = cv2.resize(image, (32, 32))
+            imData = cv2.resize(image, self.imgSize)
             # 2 get descriptor
             queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
-        elif self.imgManager.descDist[0] == "MomentsStat + Gabor" or self.imgManager.descDist[0] == "MomentsStat + Zernike":
+        elif self.imgManager.descDist[0] == self.COLOR_TEXTURE or \
+            self.imgManager.descDist[0] == self.COLOR_SHAPE:
             # 1 get image data
             path = self.selected.filename.replace("\\","/")
             fn, pixList = self.imgManager.openImage(self.selected)
             image  = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-            grayImgData = cv2.resize(image, (32, 32))
+            grayImgData = cv2.resize(image, self.imgSize)
             # 2 get descriptor
             queryFeature  = [float(x) for x in self.imgManager.descriptor(pixList, grayImgData)]
-        elif 'Gabor' in self.imgManager.descDist[0] or self.imgManager.descDist[0] == 'HuMoments':
+        elif 'Gabor' in self.imgManager.descDist[0] or self.imgManager.descDist[0] == self.MOMENTS_HU:
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-            imData = cv2.resize(image, (32, 32))
+            imData = cv2.resize(image, self.imgSize)
             # 2 get descriptor
             queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
         else:
             im = cv2.imread(self.selected.filename)
-            im = cv2.resize(im, (32, 32))
+            im = cv2.resize(im, self.imgSize)
             queryFeature = self.imgManager.descriptor(list(im))
         
         results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
@@ -698,16 +713,24 @@ class CBIR_SIDI(Frame):
         """
         # initial display photos
         if self.basedOn == 1:
-            optionList_desc = ('Moments_Staistiques', 'Histogramme', 'Avgs')
-            optionListD = ('D. Euclidien', 'CHi square', 'Interesect', 'Manhatan')
-            self.destroyFusionOptions()
+            optionList_desc = (self.MOYENNE_STATISTIQUES,
+                           self.MOMENTS_STATISTIQUES,
+                           self.HISTOGRAMME_RGB,
+                           self.HISTOGRAMME_HSV)
+            optionListD = (self.MANHATAN,
+                      self.EUCLIDIEN,
+                       self.CHISQRT, 
+                       self.INTERSECTION)
+            self.destroyFusionOptions() 
         elif self.basedOn == 2:
-            optionList_desc = ('Gabor', 'GaborV', 'Haralick')
-            optionListD = ('D. Euclidien', 'Manhatan')
+            optionList_desc = (self.GABOR, 'Gabor', self.HARALICK)
+            optionListD = (self.MANHATAN,
+                      self.EUCLIDIEN)
             self.destroyFusionOptions()
         elif self.basedOn == 3:
-            optionList_desc = ('HuMoments', 'ZernikeMoments')
-            optionListD = ('D. Euclidien', 'Manhatan')
+            optionList_desc = (self.MOMENTS_HU, self.MOMENTS_ZERNIKE)
+            optionListD = (self.MANHATAN,
+                      self.EUCLIDIEN)
             self.destroyFusionOptions()
         elif self.basedOn == 4:
             self.w1 = DoubleVar()
@@ -734,8 +757,8 @@ class CBIR_SIDI(Frame):
                                     textvariable=self.w2)
             self.entryToSW.grid(row=0, column=5)
 
-            optionList_desc = ('MomentsStat + Gabor', 'MomentsStat + Zernike')
-            optionListD = ('D. Euclidien Fusion', 'ManhatanFusion')
+            optionList_desc = (self.COLOR_TEXTURE, self.COLOR_SHAPE)
+            optionListD = (self.MANHATAN_FUSION, self.EUCLID_FUSION)
 
         self.var_desciptor.set(optionList_desc[0])
         self.om_descriptor.destroy()

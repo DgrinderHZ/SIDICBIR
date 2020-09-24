@@ -11,7 +11,7 @@ if __name__ == '__main__':
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     print(w, h )
     root.geometry("%dx%d" % (w, h))
-    descDist = ["Avgs", "Euclid"]
+    descDist = ["Moyenne Statistiques", "Euclidienne"]
     colorDescriptor = ColorDescriptor()
     distance = Distance()
 
