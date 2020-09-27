@@ -238,11 +238,12 @@ class CBIR_SIDI(Frame):
                     )
         self.om_descriptor.grid(row=0, column=1)
         #___________________________________________________________________________#
-        
+        self.imageOptions = Canvas(self.dbQueryPanel, bg=self.bgc)
+        self.imageOptions.pack()
         ######## Type of image selection
         self.var_typeImg = StringVar()
         optionList_ti = ('.jpg', '.png')
-        self.canva_typeImg = Canvas(self.offlineOptions, bg=self.bgc)
+        self.canva_typeImg = Canvas(self.imageOptions, bg=self.bgc)
         self.canva_typeImg.grid(row=0, column=1)
 
         self.label_typeImg = Label(self.canva_typeImg, 
@@ -252,6 +253,15 @@ class CBIR_SIDI(Frame):
         self.var_typeImg.set(optionList_ti[0])
         self.om_imgType = OptionMenu(self.canva_typeImg, self.var_typeImg, *optionList_ti)
         self.om_imgType.grid(row=0, column=1)
+
+        self.imgSizeVar = IntVar()
+        self.imgSizeVar.set(32)
+        self.labelImgSize= Label(self.imageOptions, 
+                                    bg=self.bgc,
+                                    text="Taille d'images N (NxN):")
+        self.labelImgSize.grid(row=0, column=2)
+        self.entryImgSize = Spinbox(self.imageOptions, width=4, from_ = 8, to = 80, textvariable=self.imgSizeVar)
+        self.entryImgSize.grid(row=0, column=3)
     
         #__________________________________________________
         self.lbl_distances = Label(self.dbQueryPanel, 
@@ -641,7 +651,7 @@ class CBIR_SIDI(Frame):
             print("[DEBUG] Raw Images Folder", imgFolder)
         
         imageFormat = self.var_typeImg.get()
-
+        self.imgSize = (self.imgSizeVar.get(), self.imgSizeVar.get())
         self.imgManager = ImageManager(self.root, DESC, DIST, descDist, self.imgSize, imgFolder, imageFormat, self.withIndexBase)
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()

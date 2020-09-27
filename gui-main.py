@@ -17,3 +17,4 @@ if __name__ == '__main__':
     top = CBIR_SIDI(root, pix, w, h)
     root.mainloop()
 
+                          
