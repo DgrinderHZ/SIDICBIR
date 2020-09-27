@@ -11,11 +11,20 @@ from mahotas import features
 
 class ColorDescriptor():
     """
-    Defines methodes for extracting descriptors (indexes)
+    Defines methodes for extracting color descriptors (indexes)
+    METHODS:
+        getAvgs(imgPix)
+        getSTDs(self, imgPix)
+        getMoments(self, imgPix)
+        def getHist(self, imgPix, bins=[17, 17, 17])
+        def getHistHSV(self, image, bins)
+        def histogram(self, image, mask, bins)
     """
     def getAvgs(self, imgPix):
         """
-        la moyenne, moment d’ordre un.
+        Computes the mean of RGB components
+        ARGUMENTS:
+            imgPix: list of image pixels [[r,g,b], ...]
         :return: (avgR, avgG, avgB)
         """
         imgPix = np.array(imgPix)
@@ -23,16 +32,20 @@ class ColorDescriptor():
 
     def getSTDs(self, imgPix):
         """
-        L'écart type, moment d’ordre deux.
-        :return:
+        Computes the standard deviation of RGB components
+        ARGUMENTS:
+            imgPix: list of image pixels [[r,g,b], ...]
+        :return: (stdR, stdG, stdB)
         """
         imgPix = np.array(imgPix)
         return list(imgPix.std(axis=1).std(axis=0))
     
     def getMoments(self, imgPix):
         """
-        moment d’ordre trois.
-        :return:
+        Computes the first 3 color moments
+        ARGUMENTS:
+            imgPix: list of image pixels [[r,g,b], ...]
+        :return: (avgR, avgG, avgB, stdR, stdG, stdB, m3R, m3G, m3B)
         """
         imgPix = np.array(imgPix)
         height, width, channels = imgPix.shape
@@ -54,7 +67,11 @@ class ColorDescriptor():
     
     def getHist(self, imgPix, bins=[17, 17, 17]):
         """
-        Return bgr Histograms
+        Computes the RGB(BGR in cv2) of the image
+        ARGUMENTS:
+            imgPix: list of image pixels [[b,g,r], ...]
+            bins: number of bins
+        :return: RGB histogram
         """
         imgPix = np.array(imgPix)
         rbgHist= cv2.calcHist(images=[imgPix], 
@@ -73,7 +90,12 @@ class ColorDescriptor():
     
     def getHistHSV(self, image, bins):
         """
-
+        Computes the HSV of the image
+        ARGUMENTS:
+            imgPix: list of image pixels [[h,s,v], ...]
+            bins: number of bins
+        :return: HSV histogram
+        
         Credits to:
             https://www.pyimagesearch.com/2014/12/01/complete-guide-building-image-search-engine-python-opencv/
         """
@@ -112,6 +134,14 @@ class ColorDescriptor():
         return features
 
     def histogram(self, image, mask, bins):
+        """
+        Helper method of getHistHSV()
+        computes the histograme of every region
+        ARGUMENTS:
+            image: the pixels of the image
+            mask: the mask for regions
+            bins: number of bins
+        """
         # extract a 3D color histogram from the masked region of the
         # image, using the supplied number of bins per channel
         hist = cv2.calcHist([image], [0, 1, 2], mask, self.bins,
