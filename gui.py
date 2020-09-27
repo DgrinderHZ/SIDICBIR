@@ -542,7 +542,7 @@ class CBIR_SIDI(Frame):
         self.btn_fusion.config(bg=self.basedOnC[3])
 
         self.basedOn = code
-        self.reset()
+        self.change()
 
     def browse_button(self):
         # Allow user to select a directory and store it in global var
@@ -707,7 +707,7 @@ class CBIR_SIDI(Frame):
             self.entryToSW.destroy()
         except AttributeError:
             pass
-    def reset(self):
+    def change(self):
         """
         Resets the GUI to its initial state
         """
@@ -774,14 +774,23 @@ class CBIR_SIDI(Frame):
                               self.var_distance, 
                               *optionListD)
         self.omd.grid(row=0, column=1)
+
+        self.canvas.destroy()
+        self.canvas = Canvas(self.resultPanel ,
+                             bg=self.bgc,
+                             width=920,
+                             height=520
+                            )
+        self.canvas.pack()
         
+        
+    def reset(self):
         self.update_preview(self.imageList[0].filename)
         self.currentImageList = self.imageList
         self.currentPhotoList = self.photoList
         il = self.currentImageList[:24]
         pl = self.currentPhotoList[:24]
         self.update_results((il, pl))
-
 
     def get_pos(self, filename):
         """

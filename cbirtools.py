@@ -141,12 +141,12 @@ class TextureDescriptor:
         _lambda = [0.06, 0.09, 0.13, 0.18, 0.25]
         for lnda in _lambda:
             for tta in np.arange(0, np.pi, np.pi / 8):
-                kern = cv2.getGaborKernel((ksize, ksize), 3.0, tta, lnda, 0.5, 0, ktype=cv2.CV_32F)
+                kern = cv2.getGaborKernel((ksize, ksize), 6, tta, lnda, 0.5, 0, ktype=cv2.CV_32F)
                 gaborFilters.append(kern)
         return gaborFilters
 
     def getGaborFeatures(self, image):
-        bank = self.getGaborFilterBank(31)
+        bank = self.getGaborFilterBank(21)
         features = []
         for kernel in bank:
             filtred = cv2.filter2D(image, cv2.CV_8UC3, kernel)
@@ -157,7 +157,7 @@ class TextureDescriptor:
 
     def getHaralickFeatures(self, imgPix):
         imgPix = np.array(imgPix)
-        return list(features.haralick(imgPix, return_mean=True))
+        return list(features.haralick(imgPix, return_mean=True)[0:6])
 
 #________________________Shape________________________
 class ShapeDescriptor:
