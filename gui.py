@@ -580,6 +580,9 @@ class CBIR_SIDI(Frame):
         elif self.var_desciptor.get() == self.HISTOGRAMME_RGB:
             DESC = colorDescriptor.getHist
             descDist[0] = self.HISTOGRAMME_RGB
+        elif self.var_desciptor.get() == self.HISTOGRAMME_HSV:
+            DESC = colorDescriptor.getHistHSV
+            descDist[0] = self.HISTOGRAMME_HSV
         elif self.var_desciptor.get() == self.MOYENNE_STATISTIQUES:
             DESC = colorDescriptor.getAvgs
             descDist[0] = self.MOYENNE_STATISTIQUES
@@ -676,7 +679,7 @@ class CBIR_SIDI(Frame):
         else:
             im = cv2.imread(self.selected.filename)
             im = cv2.resize(im, self.imgSize)
-            queryFeature = self.imgManager.descriptor(list(im))
+            queryFeature = self.imgManager.descriptor(im)
         
         results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
         self.currentImageList, self.currentPhotoList = [], []

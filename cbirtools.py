@@ -89,7 +89,7 @@ class ColorDescriptor():
 
         return rbgHist
     
-    def getHistHSV(self, image, bins):
+    def getHistHSV(self, image, bins=(8, 12, 3)):
         """
         Computes the HSV of the image
         ARGUMENTS:
@@ -145,7 +145,7 @@ class ColorDescriptor():
         """
         # extract a 3D color histogram from the masked region of the
         # image, using the supplied number of bins per channel
-        hist = cv2.calcHist([image], [0, 1, 2], mask, self.bins,
+        hist = cv2.calcHist([image], [0, 1, 2], mask, bins,
             [0, 180, 0, 256, 0, 256])
         # normalize the histogram if we are using OpenCV 2.4
         if imutils.is_cv2():

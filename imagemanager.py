@@ -83,7 +83,7 @@ class ImageManager:
             # look for saved values
             #if os.path.isfile('indexBase.txt'):
             if withIndexBase:
-                print("descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
+                print("[INFO] descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
                 print("[INFO]-- Adding Images to the tree")
                 data = []
                 if descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
@@ -94,6 +94,13 @@ class ImageManager:
                         #print(csvHist)
                         hist = np.reshape(csvHist, (17, 17, 17))
                         self.addObjectsToTree([data[0], hist])
+                        print(".", end= " ")
+                elif descDist[0] == self.HISTOGRAMME_HSV: # Descriptor is Histogram
+                    for index in glob(descDist[0]+'_indexBase/*.csv'):
+                        data = csvmanager.readCSV_AVG(index)
+                        # TODO: Add to M tree
+                        csvHist = list(map(np.float32, data[1:]))
+                        self.addObjectsToTree([data[0], csvHist])
                         print(".", end= " ")
                 else:
                     for index in glob(descDist[0]+'_indexBase/*.csv'):
@@ -134,6 +141,20 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hist.flatten()])
+                        print(".", end= " ")
+                elif descDist[0] == self.HISTOGRAMME_HSV: # Descriptor is Histogram
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn, pixList = self.openImage(im)
+                        # 2 get descriptor
+                        imData = cv2.imread(im.filename.replace("\\","/"))
+                        imData = cv2.resize(imData, self.imgSize)
+                        hist = descriptor(imData)
+                        # TODO: 3 Add to M tree
+                        obj = [fn, hist]
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, hist])
                         print(".", end= " ")
                 elif descDist[0] == "Gabor" or descDist[0] == self.GABOR:
                     for im in self.imageList[:]:
