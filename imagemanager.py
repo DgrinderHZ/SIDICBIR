@@ -38,7 +38,9 @@ class ImageManager:
         ##############################
         ########### Mtree ############
         ##############################
-        self.mtree = MTree(distance, max_nodes=8)
+        self.mtree = None
+        if distance:
+            self.mtree = MTree(distance, max_nodes=8)
         self.imageList = []
         self.photoList = []
         self.xmax = 0
@@ -76,108 +78,108 @@ class ImageManager:
             # Add the images to the lists.
             self.imageList.append(im)
             self.photoList.append(photo)
+        if descriptor:
+            # TODO: DONE  reading the saved descriptors
+            # look for saved values
+            #if os.path.isfile('indexBase.txt'):
+            if withIndexBase:
+                print("descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
+                print("[INFO]-- Adding Images to the tree")
+                data = []
+                if descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
+                    for index in glob(descDist[0]+'_indexBase/*.csv'):
+                        data = csvmanager.readCSV_AVG(index)
+                        # TODO: Add to M tree
+                        csvHist = np.array(list(map(np.float32, data[1:])))
+                        #print(csvHist)
+                        hist = np.reshape(csvHist, (17, 17, 17))
+                        self.addObjectsToTree([data[0], hist])
+                        print(".", end= " ")
+                else:
+                    for index in glob(descDist[0]+'_indexBase/*.csv'):
+                        data = csvmanager.readCSV_AVG(index)
+                        # TODO: Add to M tree
+                        self.addObjectsToTree([data[0], data[1:]])
+                        print(".", end= " ")
+                print("\n[INFO]-- Insertion completed.")
+                self.saveRawImagesFolder(data[0])
+                
 
-        # TODO: DONE  reading the saved descriptors
-        # look for saved values
-        #if os.path.isfile('indexBase.txt'):
-        if withIndexBase:
-            print("descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
-            print("[INFO]-- Adding Images to the tree")
-            data = []
-            if descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
-                for index in glob.glob(descDist[0]+'_indexBase/*.csv'):
-                    data = csvmanager.readCSV_AVG(index)
-                    # TODO: Add to M tree
-                    csvHist = np.array(list(map(np.float32, data[1:])))
-                    #print(csvHist)
-                    hist = np.reshape(csvHist, (17, 17, 17))
-                    self.addObjectsToTree([data[0], hist])
-                    print(".", end= " ")
+            # If not already computed, then compute the indexes
             else:
-                for index in glob(descDist[0]+'_indexBase/*.csv'):
-                    data = csvmanager.readCSV_AVG(index)
-                    # TODO: Add to M tree
-                    self.addObjectsToTree([data[0], data[1:]])
-                    print(".", end= " ")
-            print("\n[INFO]-- Insertion completed.")
-            self.saveRawImagesFolder(data[0])
+                # Compute
+                print("[INFO]-- Adding Images to the tree")
+                if descDist[0] == self.MOYENNE_STATISTIQUES or\
+                    descDist[0] == self.MOMENTS_STATISTIQUES or\
+                        descDist[0] == self.HARALICK:
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn, pixList = self.openImage(im)
+                        # 2 get descriptor
+                        avgs = [float(x) for x in descriptor(pixList)]
+                        obj = [fn, avgs]
+                        # TODO: 3 Add to M tree
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, avgs])
+                        print(".", end= " ")
+                elif descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn, pixList = self.openImage(im)
+                        # 2 get descriptor
+                        hist = descriptor(pixList)
+                        # TODO: 3 Add to M tree
+                        obj = [fn, hist]
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, hist.flatten()])
+                        print(".", end= " ")
+                elif descDist[0] == "Gabor" or descDist[0] == self.GABOR:
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn = self.cleanFileName(im.filename)
+                        image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                        imData = cv2.resize(image, self.imgSize)
+                        # 2 get descriptor
+                        avgs = [float(x) for x in descriptor(imData)]
+                        obj = [fn, avgs]
+                        # TODO: 3 Add to M tree
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, avgs])
+                        print(".", end= " ")
+                elif descDist[0] == self.MOMENTS_HU or descDist[0] == self.MOMENTS_ZERNIKE:
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn = self.cleanFileName(im.filename)
+                        image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                        imData = cv2.resize(image, self.imgSize)
+                        # 2 get descriptor
+                        hu = [float(x) for x in descriptor(imData)]
+                        obj = [fn, hu]
+                        # TODO: 3 Add to M tree
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, hu])
+                        print(".", end= " ")
+                elif descDist[0] == self.COLOR_TEXTURE or descDist[0] == self.COLOR_SHAPE:
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn, pixList = self.openImage(im)
+                        fn = self.cleanFileName(im.filename)
+                        image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                        grayImgData = cv2.resize(image, self.imgSize)
+                        # 2 get descriptor
+                        hu = [float(x) for x in descriptor(pixList, grayImgData)]
+                        obj = [fn, hu]
+                        # TODO: 3 Add to M tree
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, hu])
+                        print(".", end= " ")
             
-
-        # If not already computed, then compute the indexes
-        else:
-            # Compute
-            print("[INFO]-- Adding Images to the tree")
-            if descDist[0] == self.MOYENNE_STATISTIQUES or\
-                 descDist[0] == self.MOMENTS_STATISTIQUES or\
-                      descDist[0] == self.HARALICK:
-                for im in self.imageList[:]:
-                    # 1 get image data
-                    fn, pixList = self.openImage(im)
-                    # 2 get descriptor
-                    avgs = [float(x) for x in descriptor(pixList)]
-                    obj = [fn, avgs]
-                    # TODO: 3 Add to M tree
-                    self.addObjectsToTree(obj)
-                    # 4 Save to desk
-                    self.saveToDesk([im.filename, avgs])
-                    print(".", end= " ")
-            elif descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
-                for im in self.imageList[:]:
-                    # 1 get image data
-                    fn, pixList = self.openImage(im)
-                    # 2 get descriptor
-                    hist = descriptor(pixList)
-                    # TODO: 3 Add to M tree
-                    obj = [fn, hist]
-                    self.addObjectsToTree(obj)
-                    # 4 Save to desk
-                    self.saveToDesk([im.filename, hist.flatten()])
-                    print(".", end= " ")
-            elif descDist[0] == "Gabor" or descDist[0] == self.GABOR:
-                for im in self.imageList[:]:
-                    # 1 get image data
-                    fn = self.cleanFileName(im.filename)
-                    image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    imData = cv2.resize(image, self.imgSize)
-                    # 2 get descriptor
-                    avgs = [float(x) for x in descriptor(imData)]
-                    obj = [fn, avgs]
-                    # TODO: 3 Add to M tree
-                    self.addObjectsToTree(obj)
-                    # 4 Save to desk
-                    self.saveToDesk([im.filename, avgs])
-                    print(".", end= " ")
-            elif descDist[0] == self.MOMENTS_HU or descDist[0] == self.MOMENTS_ZERNIKE:
-                for im in self.imageList[:]:
-                    # 1 get image data
-                    fn = self.cleanFileName(im.filename)
-                    image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    imData = cv2.resize(image, self.imgSize)
-                    # 2 get descriptor
-                    hu = [float(x) for x in descriptor(imData)]
-                    obj = [fn, hu]
-                    # TODO: 3 Add to M tree
-                    self.addObjectsToTree(obj)
-                    # 4 Save to desk
-                    self.saveToDesk([im.filename, hu])
-                    print(".", end= " ")
-            elif descDist[0] == self.COLOR_TEXTURE or descDist[0] == self.COLOR_SHAPE:
-                for im in self.imageList[:]:
-                    # 1 get image data
-                    fn, pixList = self.openImage(im)
-                    fn = self.cleanFileName(im.filename)
-                    image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                    grayImgData = cv2.resize(image, self.imgSize)
-                    # 2 get descriptor
-                    hu = [float(x) for x in descriptor(pixList, grayImgData)]
-                    obj = [fn, hu]
-                    # TODO: 3 Add to M tree
-                    self.addObjectsToTree(obj)
-                    # 4 Save to desk
-                    self.saveToDesk([im.filename, hu])
-                    print(".", end= " ")
-          
-            print("\n[INFO]-- Insertion completed.")
+                print("\n[INFO]-- Insertion completed.")
 
     def openImage(self, im):
         fn = self.cleanFileName(im.filename)

@@ -8,6 +8,7 @@ import math
 import numpy as np
 import cv2, imutils
 from mahotas import features
+from scipy.spatial import distance as dist
 
 class ColorDescriptor():
     """
@@ -235,20 +236,16 @@ class Distance():
     Defines different distances to use!
     """
     def manhatan(self, obj, query):
-        avgs1 = obj[1]
-        avgs2 = query[1]
-        d = 0
-        for i in range(len(avgs1)):
-            d += abs(avgs1[i]-avgs2[i])
-        return d
+        l1, l2 = np.array(obj[1]), np.array(query[1])
+        if len(l1.shape) >= 2:
+            l1, l2 = l1.flatten(), l2.flatten()
+        return dist.cityblock(l1,l2)
 
     def euclid(self, obj, query):
-        avgs1 = obj[1]
-        avgs2 = query[1]
-        d = 0
-        for i in range(len(avgs1)):
-            d += (avgs1[i]-avgs2[i])**2
-        return sqrt(d)
+        l1, l2 = np.array(obj[1]), np.array(query[1])
+        if len(l1.shape) >= 2:
+            l1, l2 = l1.flatten(), l2.flatten()
+        return dist.euclidean(l1, l2)
 
     def euclid_moments(self, obj, query):
         avgs1 = obj[1]
@@ -258,11 +255,6 @@ class Distance():
             d += ((avgs1[i]-avgs2[i])+(avgs1[i+3]-avgs2[i+3])+(avgs1[i+6]-avgs2[i+6]))**2
         return sqrt(d)
     
-    def chi(self, obj, query):
-        h1 = obj[1]
-        h2 = query[1]
-        return cv2.compareHist(h1, h2, cv2.HISTCMP_CHISQR)
-    
     def chi2_distance(self, histA, histB, eps = 1e-10):
         # compute the chi-squared distance
         d = 0.5 * np.sum([((a - b) ** 2) / (a + b + eps)
@@ -270,10 +262,20 @@ class Distance():
         # return the chi-squared distance
         return d
 
-    def intersect(self, obj, query):
+    def chi(self, obj, query):
         h1 = obj[1]
         h2 = query[1]
-        return cv2.compareHist(h1, h2, cv2.HISTCMP_INTERSECT)
+        return cv2.compareHist(h1, h2, cv2.HISTCMP_CHISQR)
+
+    def Bhattachatyya(self, obj, query):
+        h1 = obj[1]
+        h2 = query[1]
+        return cv2.compareHist(h1, h2, cv2.HISTCMP_BHATTACHARYYA)
+    
+    def HELLINGER(self, obj, query):
+        h1 = obj[1]
+        h2 = query[1]
+        return cv2.compareHist(h1, h2, cv2.HISTCMP_HELLINGER)
 
 
 
