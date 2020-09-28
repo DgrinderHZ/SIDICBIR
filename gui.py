@@ -450,21 +450,21 @@ class CBIR_SIDI(Frame):
 
         
     def mesurer(self):
-        mesurUI = Toplevel(self.root)
-        mesurUI.geometry("400x600")
+        self.mesurUI = Toplevel(self.root)
+        self.mesurUI.geometry("600x600")
 
-        self.baseCanva = Canvas(mesurUI)
-        self.baseCanva.pack()
+        self.baseCanva = Canvas(self.mesurUI)
+        self.baseCanva.pack(pady=5)
         self.label_base = Label(self.baseCanva,
                                 bg=self.bgc,
                                 text="Dossier de la base d'image utilsée:")
         self.label_base.grid(row=0, column=0)
 
-        self.entryBase = Entry(self.baseCanva, width=20, textvariable=self.folder_path)
+        self.entryBase = Entry(self.baseCanva, width=50, textvariable=self.folder_path)
         self.entryBase.grid(row=0, column=1)
 
-        self.classCanva = Canvas(mesurUI)
-        self.classCanva.pack()
+        self.classCanva = Canvas(self.mesurUI)
+        self.classCanva.pack(pady=5)
         self.label_queryClass = Label(self.classCanva,
                                 bg=self.bgc,
                                 text="Classe d'image requête:")
@@ -474,69 +474,28 @@ class CBIR_SIDI(Frame):
         self.classe.set(self.imgManager.cleanFileName(self.selected.filename))
         self.entryQueryClass = Entry(self.classCanva, width=20, textvariable=self.classe)
         self.entryQueryClass.grid(row=0, column=1)
-        self.btn_browseQC = Button(self.classCanva, text="Confusion matrix", 
-                                    command=lambda: self.confusionMatrix(mesurUI))
-        self.btn_browseQC.grid(row=0, column=2)
+        self.btn_browseQC = Button(self.mesurUI, text="Confusion matrix", 
+                                    font=('Arial',10,'bold'),
+                                    width=40,  
+                                    pady=self.bth, 
+                                    border=5, 
+                                    bg=self.btc,
+                                    fg=self.fgc, 
+                                    activebackground=self.abtc,
+                                    command=lambda: self.confusionMatrix())
+        self.btn_browseQC.pack()
 
-        
+        self.CMcanva = Canvas(self.mesurUI)
+        self.CMcanva.pack(pady=5)
+        self.ResCanva = Canvas(self.mesurUI)
+        self.ResCanva.pack(pady=5)
 
-        self.positif = IntVar()
-        self.positif.set(10)
-        self.canvaPositif = Canvas(mesurUI, bg=self.bgc)
-        self.canvaPositif.pack()
-        self.labelPositif = Label(self.canvaPositif, 
-                                    bg=self.bgc,
-                                    text="Nombre total d'images pertinentes:")
-        self.labelPositif.grid(row=0, column=0)
-        self.entryPositif = Spinbox(self.canvaPositif, width=4, from_ = 0, to = 100, 
-                                    
-                                    textvariable=self.positif)
-        self.entryPositif.grid(row=0, column=1)
-        
-        self.vp = IntVar()
-        self.vp.set(10)
-        self.VPCanva = Canvas(mesurUI, bg=self.bgc)
-        self.VPCanva.pack()
-        self.VPLabel = Label(self.VPCanva, 
-                                    bg=self.bgc,
-                                    text="Nombre d'images pertinentes retrouvées:")
-        self.VPLabel.grid(row=0, column=0)
-        self.VPEntry = Spinbox(self.VPCanva, width=4, from_ = 0, to = 100, 
-                                textvariable=self.vp)
-        self.VPEntry.grid(row=0, column=1)
-
-        self.found = IntVar()
-        try:
-            self.found.set(self.resultsLenght)
-        except AttributeError:
-            pass
-        self.foundCanva = Canvas(mesurUI, bg=self.bgc)
-        self.foundCanva.pack()
-        self.foundLabel = Label(self.foundCanva, 
-                                    bg=self.bgc,
-                                    text="Nombre total d'images retrouvées:")
-        self.foundLabel.grid(row=0, column=0)
-        self.foundEntry = Spinbox(self.foundCanva, width=4, 
-                               from_ = 0, to = 100, 
-                               textvariable=self.found)
-        self.foundEntry.grid(row=0, column=1)
-
-        self.btn_calcul = Button(mesurUI, 
-                                 text="Calculer!",
-                                 font=('Arial',10,'bold'),
-                                 width=40,  
-                                 pady=self.bth, 
-                                 border=5, 
-                                 bg=self.btc,
-                                 fg=self.fgc, 
-                                 activebackground=self.abtc,
-                                 command=lambda: self.getQualityMeasures(mesurUI))
-        self.btn_calcul.pack()
-
-
-        mesurUI.mainloop()
+        self.mesurUI.mainloop()
     
-    def confusionMatrix(self, view):
+    def confusionMatrix(self):
+        self.ResCanva.destroy()
+        self.CMcanva.destroy()
+
         listAll = glob(self.folder_path.get()+'/*'+self.imgManager.imgFormat)
         true = []
         first, all = -1, 0
@@ -566,69 +525,148 @@ class CBIR_SIDI(Frame):
                 pred[i] = 1
                 tmp -= 1
         notfound = all - found
-        print("notfound ", notfound, first, all)
+        #print("notfound ", notfound, first, all)
         for i in range(len(pred)):
             if  first <= i <= first+all-1 and notfound > 0 and pred[i]==1:
                 pred[i] = 0
                 notfound -= 1
         cm = confusion_matrix(true, pred)
         tn, fp, fn, tp = cm.ravel()
-        print("(tn, fp, fn, tp) = ", (tn, fp, fn, tp))
+        #print("(tn, fp, fn, tp) = ", (tn, fp, fn, tp))
+
+        #_______________________________________
+        # TODO: do it with some clean code
+        self.CMcanva = Canvas(self.mesurUI)
+        self.CMcanva.pack()
+        view = self.CMcanva
+
+        self.positif = IntVar()
+        self.positif.set(10)
+        
+        self.canvaPositif = Canvas(view, bg=self.bgc)
+        self.canvaPositif.pack(pady=5)
+        self.labelPositif = Label(self.canvaPositif, 
+                                    bg=self.bgc,
+                                    text="Nombre total d'images pertinentes:")
+        self.labelPositif.grid(row=0, column=0)
+        self.entryPositif = Spinbox(self.canvaPositif, width=4, from_ = 0, to = 100, 
+                                    
+                                    textvariable=self.positif)
+        self.entryPositif.grid(row=0, column=1)
+        
+        self.vp = IntVar()
+        self.vp.set(10)
+        self.VPCanva = Canvas(view, bg=self.bgc)
+        self.VPCanva.pack()
+        self.VPLabel = Label(self.VPCanva, 
+                                    bg=self.bgc,
+                                    text="Nombre d'images pertinentes retrouvées:")
+        self.VPLabel.grid(row=0, column=0)
+        self.VPEntry = Spinbox(self.VPCanva, width=4, from_ = 0, to = 100, 
+                                textvariable=self.vp)
+        self.VPEntry.grid(row=0, column=1)
+
+        self.found = IntVar()
+        try:
+            self.found.set(self.resultsLenght)
+        except AttributeError:
+            pass
+        self.foundCanva = Canvas(view, bg=self.bgc)
+        self.foundCanva.pack()
+        self.foundLabel = Label(self.foundCanva, 
+                                    bg=self.bgc,
+                                    text="Nombre total d'images retrouvées:")
+        self.foundLabel.grid(row=0, column=0)
+        self.foundEntry = Spinbox(self.foundCanva, width=4, 
+                               from_ = 0, to = 100, 
+                               textvariable=self.found)
+        self.foundEntry.grid(row=0, column=1)
+        #________________________
         self.found.set(tp+fp)
         self.vp.set(tp)
         self.positif.set(tp+fn)
-        print("Rappel :", tp/(tp+fn))
-        print("Precision :", tp/(tp+fp))
+        #print("Rappel :", tp/(tp+fn)) print("Precision :", tp/(tp+fp))
 
         self.posNegCanva = Canvas(view)
         self.posNegCanva.pack()
+        self.label= Label(self.posNegCanva, width=20)
+        self.label.grid(row=0, column=0)
         self.label_positif = Label(self.posNegCanva,
-                                bg=self.bgc,
+                                bg="red",
                                 width=20,
                                 font=('Arial',10,'bold'),
-                                text="Positif"
+                                text="Positif",
+                                border=1, 
+                                pady=1, 
+                                padx=2
                                 )
         self.label_positif.grid(row=0, column=1)
         self.label_negatif = Label(self.posNegCanva,
-                                bg=self.bgc,
+                                bg="red",
                                 width=20,
                                 font=('Arial',10,'bold'),
-                                text="Négatif")
+                                text="Négatif",
+                                border=1, 
+                                pady=1,
+                                padx=2)
         self.label_negatif.grid(row=0, column=2)
 
         self.trueCanva = Canvas(view)
         self.trueCanva.pack()
         self.label_true= Label(self.trueCanva,
-                                bg=self.bgc,
+                                bg="green",
+                                width=18,
                                 font=('Arial',10,'bold'),
-                                text="Vrai"
+                                text=" Vrai ",
+                                border=1, 
+                                pady=1, 
                                 )
         self.label_true.grid(row=0, column=0)
 
-        self.entryTP = Label(self.trueCanva, width=20, 
-                                        text=str(tp))
+        self.entryTP = Label(self.trueCanva, width=23, 
+                                        text=str(tp),
+                                        bg="#8aed8a")
         self.entryTP.grid(row=0, column=1)
 
-        self.entryTN = Label(self.trueCanva, width=20, 
-                                        text=str(tn))
+        self.entryTN = Label(self.trueCanva, width=23, 
+                                        text=str(tn),
+                                        bg="#d7fce4")
         self.entryTN.grid(row=0, column=2)
 
         self.falseCanva = Canvas(view)
         self.falseCanva.pack()
         self.label_false= Label(self.falseCanva,
-                                bg=self.bgc,
+                                bg="green",
+                                width=18,
                                 font=('Arial',10,'bold'),
-                                text="Faux"
+                                text="Faux",
+                                border=1, 
+                                pady=1, 
                                 )
         self.label_false.grid(row=0, column=0)
 
-        self.entryFP = Label(self.falseCanva, width=20, 
-                                        text=str(fp))
+        self.entryFP = Label(self.falseCanva, 
+                                width=23, 
+                                text=str(fp),
+                                bg="#f78f95")
         self.entryFP.grid(row=0, column=1)
 
-        self.entryFN = Label(self.falseCanva, width=20, 
-                                        text=str(fn))
+        self.entryFN = Label(self.falseCanva, width=23, 
+                                        text=str(fn),
+                                        bg="#7b9c5a")
         self.entryFN.grid(row=0, column=2)
+
+        self.btn_calcul = Button(view, 
+                                 text="Calculer!",
+                                 font=('Arial',10,'bold'),
+                                 width=40,  
+                                 pady=self.bth, 
+                                 border=5, 
+                                 bg=self.btc,
+                                 fg=self.fgc, 
+                                 activebackground=self.abtc,
+                                 command=lambda: self.getQualityMeasures())
+        self.btn_calcul.pack(pady=5)
 
 
 
@@ -638,7 +676,15 @@ class CBIR_SIDI(Frame):
 
 
 
-    def getQualityMeasures(self, view):
+    def getQualityMeasures(self):
+        try:
+            self.ResCanva.destroy()
+        except AttributeError:
+            pass
+
+        self.ResCanva = Canvas(self.mesurUI)
+        self.ResCanva.pack()
+        view = self.ResCanva
         recall = self.vp.get() / self.positif.get()
         precision = self.vp.get() / self.found.get()
         F_score = 2*recall*precision /(recall+precision)
