@@ -1,3 +1,4 @@
+
 """
     Contains our CBIR tools
     DESCRIPTOR EXTRACTORS
@@ -9,6 +10,10 @@ import numpy as np
 import cv2, imutils
 from mahotas import features
 from scipy.spatial import distance as dist
+from skimage.filters import gabor_kernel
+from skimage import color
+from scipy import ndimage as ndi
+import scipy.misc, os 
 
 class ColorDescriptor():
     """
@@ -158,37 +163,10 @@ class ColorDescriptor():
 
     #_________________________________________________________________________
 class TextureDescriptor:
-    def getGabor(self, image):
-        kernel        = cv2.getGaborKernel((21, 21), 8.0, np.pi/4, 10.0, 0.5, 0, ktype=cv2.CV_32F)
-        kernel       /= math.sqrt((kernel * kernel).sum())
-        filtered_img  = cv2.filter2D(image,    cv2.CV_8UC3, kernel)
-        heigth, width = kernel.shape 
-        # convert matrix to vector 
-        descriptor = cv2.resize(filtered_img, (3*width, 3*heigth), interpolation=cv2.INTER_CUBIC)
-        return np.hstack(descriptor)
-    
-    def getGaborFilterBank(self, ksize):
-        gaborFilters = []
-        _lambda = [0.06, 0.09, 0.13, 0.18, 0.25]
-        for lnda in _lambda:
-            for tta in np.arange(0, np.pi, np.pi / 8):
-                kern = cv2.getGaborKernel((ksize, ksize), 6, tta, lnda, 0.5, 0, ktype=cv2.CV_32F)
-                gaborFilters.append(kern)
-        return gaborFilters
-
-    def getGaborFeatures(self, image):
-        bank = self.getGaborFilterBank(21)
-        features = []
-        for kernel in bank:
-            filtred = cv2.filter2D(image, cv2.CV_8UC3, kernel)
-            features.append(kernel.mean())
-            features.append( kernel.std())
-        return features
-    
 
     def getHaralickFeatures(self, imgPix):
         imgPix = np.array(imgPix)
-        return list(features.haralick(imgPix, return_mean=True)[0:6])
+        return list(features.haralick(imgPix, return_mean=True))
 
 #________________________Shape________________________
 class ShapeDescriptor:
@@ -230,6 +208,110 @@ class ShapeDescriptor:
         # of pokemon outline, then update the index
         return features.zernike_moments(outline, radius)
 
+
+
+
+theta, frequency, sigma, bandwidth, n_slice= 8, [0.06, 0.09, 0.13, 0.18, 0.25], (1, 3, 5), (0.3, 0.7, 1), 2
+
+def make_gabor_kernel(theta, frequency, sigma, bandwidth):
+  kernels = []
+  for t in range(theta):
+    t = t / float(theta) * np.pi
+    for f in frequency:
+      if sigma:
+        for s in sigma:
+          kernel = gabor_kernel(f, theta=t, sigma_x=s, sigma_y=s)
+          kernels.append(kernel)
+      if bandwidth:
+        for b in bandwidth:
+          kernel = gabor_kernel(f, theta=t, bandwidth=b)
+          kernels.append(kernel)
+  return kernels
+
+gabor_kernels = make_gabor_kernel(theta, frequency, sigma, None)
+
+class Gabor(object):  
+
+  def gabor_histogram(self, input, normalize=True):
+    ''' count img histogram
+  
+      arguments
+        input    : a path to a image or a numpy.ndarray
+        normalize: normalize output histogram
+  
+      return
+          a numpy array with size len(gabor_kernels)
+    '''
+    if isinstance(input, np.ndarray):  # examinate input type
+      img = input.copy()
+    else:
+      img = cv2.imread(input) #scipy.misc
+    height, width, channel = img.shape
+  
+    hist = self._gabor(img, kernels=gabor_kernels)
+  
+    if normalize:
+      hist /= np.sum(hist)
+  
+    return hist.flatten()
+  
+  
+  def _feats(self, image, kernel):
+    '''
+      arguments
+        image : ndarray of the image
+        kernel: a gabor kernel
+      return
+        a ndarray whose shape is (2, )
+    '''
+    feats = np.zeros(2, dtype=np.double)
+    filtered = ndi.convolve(image, np.real(kernel), mode='wrap')
+    feats[0] = filtered.mean()
+    feats[1] = filtered.var()
+    return feats
+  
+  
+  def _power(self, image, kernel):
+    '''
+      arguments
+        image : ndarray of the image
+        kernel: a gabor kernel
+      return
+        a ndarray whose shape is (2, )
+    '''
+    image = (image - image.mean()) / image.std()  # Normalize images for better comparison.
+    f_img = np.sqrt(ndi.convolve(image, np.real(kernel), mode='wrap')**2 +
+                   ndi.convolve(image, np.imag(kernel), mode='wrap')**2)
+    feats = np.zeros(2, dtype=np.double)
+    feats[0] = f_img.mean()
+    feats[1] = f_img.var()
+    return feats
+  
+  
+  def _gabor(self, image, kernels=gabor_kernels, normalize=True):
+  
+    img = color.rgb2gray(image)
+  
+    results = []
+    feat_fn = self._feats #self._power
+    for kernel in kernels:
+      results.append(self._worker(img, kernel, feat_fn))
+    
+    hist = np.array([res for res in results])
+  
+    if normalize:
+      hist = hist / np.sum(hist, axis=0)
+  
+    return hist.T.flatten()
+  
+  
+  def _worker(self, img, kernel, feat_fn):
+    try:
+      ret = feat_fn(img, kernel)
+    except:
+      print("return zero")
+      ret = np.zeros(2)
+    return ret
 
 class Distance():
     """

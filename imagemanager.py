@@ -11,7 +11,7 @@ from os import mkdir
 
 # Pixel Info class (from sample code)
 class ImageManager:
-    def __init__(self, root, descriptor, distance, descDist, imgSize=(32, 32), imgFolder="default", imageFormat='.jpg', withIndexBase=False):
+    def __init__(self, root, descriptor, distance, descDist, imgSize=(32, 32), imgFolder="default", imageFormat='.jpg', withIndexBase=False, radius=18):
         self.root = root
         self.imgSize = imgSize
         self.descriptor = descriptor
@@ -19,6 +19,7 @@ class ImageManager:
         self.imgFolder = imgFolder
         self.descDist = descDist
         self.imgFormat = imageFormat
+        self.radius = radius
 
         # CONSTANTS
         self.MOYENNE_STATISTIQUES = "Moyenne Statistiques"
@@ -156,21 +157,22 @@ class ImageManager:
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hist])
                         print(".", end= " ")
-                elif descDist[0] == "Gabor" or descDist[0] == self.GABOR:
+                elif descDist[0] == self.GABOR:
                     for im in self.imageList[:]:
                         # 1 get image data
                         fn = self.cleanFileName(im.filename)
-                        image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                        imData = cv2.resize(image, self.imgSize)
+                        #image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                        #imData = cv2.resize(image, self.imgSize)
                         # 2 get descriptor
-                        avgs = [float(x) for x in descriptor(imData)]
+                        img = im.filename.replace("\\","/")
+                        avgs = [float(x) for x in descriptor(img)]
                         obj = [fn, avgs]
                         # TODO: 3 Add to M tree
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, avgs])
                         print(".", end= " ")
-                elif descDist[0] == self.MOMENTS_HU or descDist[0] == self.MOMENTS_ZERNIKE:
+                elif descDist[0] == self.MOMENTS_HU:
                     for im in self.imageList[:]:
                         # 1 get image data
                         fn = self.cleanFileName(im.filename)
@@ -178,6 +180,20 @@ class ImageManager:
                         imData = cv2.resize(image, self.imgSize)
                         # 2 get descriptor
                         hu = [float(x) for x in descriptor(imData)]
+                        obj = [fn, hu]
+                        # TODO: 3 Add to M tree
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, hu])
+                        print(".", end= " ")
+                elif descDist[0] == self.MOMENTS_ZERNIKE:
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn = self.cleanFileName(im.filename)
+                        image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
+                        imData = cv2.resize(image, self.imgSize)
+                        # 2 get descriptor
+                        hu = [float(x) for x in descriptor(imData, self.radius)]
                         obj = [fn, hu]
                         # TODO: 3 Add to M tree
                         self.addObjectsToTree(obj)

@@ -238,6 +238,7 @@ class CBIR_SIDI(Frame):
                              *optionList_desc
                     )
         self.om_descriptor.grid(row=0, column=1)
+        
         #___________________________________________________________________________#
         self.imageOptions = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.imageOptions.pack()
@@ -254,7 +255,7 @@ class CBIR_SIDI(Frame):
         self.var_typeImg.set(optionList_ti[0])
         self.om_imgType = OptionMenu(self.canva_typeImg, self.var_typeImg, *optionList_ti)
         self.om_imgType.grid(row=0, column=1)
-
+        
         self.imgSizeVar = IntVar()
         self.imgSizeVar.set(32)
         self.labelImgSize= Label(self.imageOptions, 
@@ -496,7 +497,11 @@ class CBIR_SIDI(Frame):
         self.ResCanva.destroy()
         self.CMcanva.destroy()
 
-        listAll = glob(self.folder_path.get()+'/*'+self.imgManager.imgFormat)
+        listAll = []
+        if self.withIndexBase:
+            listAll = glob(self.imgManager.imgFolder+'/*'+self.imgManager.imgFormat)
+        else:
+            listAll = glob(self.folder_path.get()+'/*'+self.imgManager.imgFormat)
         true = []
         first, all = -1, 0
         for i in range(len(listAll)):
@@ -531,6 +536,7 @@ class CBIR_SIDI(Frame):
                 pred[i] = 0
                 notfound -= 1
         cm = confusion_matrix(true, pred)
+        print(cm)
         tn, fp, fn, tp = cm.ravel()
         #print("(tn, fp, fn, tp) = ", (tn, fp, fn, tp))
 
@@ -775,11 +781,11 @@ class CBIR_SIDI(Frame):
         elif self.var_desciptor.get() == self.MOYENNE_STATISTIQUES:
             DESC = colorDescriptor.getAvgs
             descDist[0] = self.MOYENNE_STATISTIQUES
-        elif self.var_desciptor.get() == 'Gabor':
-            DESC = textureDescriptor.getGabor
-            descDist[0] = "Gabor"
         elif self.var_desciptor.get() == self.GABOR:
-            DESC = textureDescriptor.getGaborFeatures
+            #DESC = textureDescriptor.getGaborFeatures
+            #descDist[0] = self.GABOR
+            g = Gabor()
+            DESC = g.gabor_histogram
             descDist[0] = self.GABOR
         elif self.var_desciptor.get() == self.HARALICK:
             DESC = textureDescriptor.getHaralickFeatures
@@ -831,7 +837,7 @@ class CBIR_SIDI(Frame):
         
         imageFormat = self.var_typeImg.get()
         self.imgSize = (self.imgSizeVar.get(), self.imgSizeVar.get())
-        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, self.imgSize, imgFolder, imageFormat, self.withIndexBase)
+        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, self.imgSize, imgFolder, imageFormat, self.withIndexBase, self.radius.get())
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()
@@ -849,7 +855,7 @@ class CBIR_SIDI(Frame):
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
             imData = cv2.resize(image, self.imgSize)
             # 2 get descriptor
-            queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
+            queryFeature = [float(x) for x in self.imgManager.descriptor(imData, self.radius.get())]
         elif self.imgManager.descDist[0] == self.COLOR_TEXTURE or \
             self.imgManager.descDist[0] == self.COLOR_SHAPE:
             # 1 get image data
@@ -859,17 +865,22 @@ class CBIR_SIDI(Frame):
             grayImgData = cv2.resize(image, self.imgSize)
             # 2 get descriptor
             queryFeature  = [float(x) for x in self.imgManager.descriptor(pixList, grayImgData)]
-        elif 'Gabor' in self.imgManager.descDist[0] or self.imgManager.descDist[0] == self.MOMENTS_HU:
+        elif self.imgManager.descDist[0] == self.MOMENTS_HU:
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
             imData = cv2.resize(image, self.imgSize)
             # 2 get descriptor
             queryFeature = [float(x) for x in self.imgManager.descriptor(imData)]
+        elif self.imgManager.descDist[0] == self.GABOR:
+            # 1 get image data
+            img = self.selected.filename.replace("\\","/")
+            # 2 get descriptor
+            queryFeature = [float(x) for x in self.imgManager.descriptor(img)]
         else:
             im = cv2.imread(self.selected.filename)
             im = cv2.resize(im, self.imgSize)
             queryFeature = self.imgManager.descriptor(im)
-        
+        print(len(queryFeature))
         self.results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
         self.currentImageList, self.currentPhotoList = [], []
         self.resultsLenght = 0
@@ -899,6 +910,13 @@ class CBIR_SIDI(Frame):
             self.entryToSW.destroy()
         except AttributeError:
             pass
+    def destroyZernikeOptions(self):
+        try:
+            self.radius.destroy()
+            self.labelRadius.destroy()
+            self.entryRadius.destroy()
+        except AttributeError:
+            pass
     def change(self):
         """
         Resets the GUI to its initial state
@@ -913,17 +931,30 @@ class CBIR_SIDI(Frame):
                       self.EUCLIDIEN,
                        self.CHISQRT, 
                        self.INTERSECTION)
-            self.destroyFusionOptions() 
+            self.destroyFusionOptions()
+            self.destroyZernikeOptions()
         elif self.basedOn == 2:
-            optionList_desc = (self.GABOR, 'Gabor', self.HARALICK)
+            optionList_desc = (self.GABOR, self.HARALICK)
             optionListD = (self.MANHATAN,
                       self.EUCLIDIEN)
             self.destroyFusionOptions()
+            self.destroyZernikeOptions()
         elif self.basedOn == 3:
             optionList_desc = (self.MOMENTS_HU, self.MOMENTS_ZERNIKE)
             optionListD = (self.MANHATAN,
                       self.EUCLIDIEN)
             self.destroyFusionOptions()
+
+            self.radius = IntVar()
+            self.radius.set(17)
+            self.labelRadius= Label(self.canva_desc, 
+                                        bg=self.bgc,
+                                        text="Radius (Zernike):")
+            self.labelRadius.grid(row=0, column=2)
+            self.entryRadius = Spinbox(self.canva_desc, width=4, 
+                                        from_ = 8, to = 80, 
+                                        textvariable=self.radius)
+            self.entryRadius.grid(row=0, column=3)
         elif self.basedOn == 4:
             self.w1 = DoubleVar()
             self.w1.set(0.5)
@@ -951,6 +982,8 @@ class CBIR_SIDI(Frame):
 
             optionList_desc = (self.COLOR_TEXTURE, self.COLOR_SHAPE)
             optionListD = (self.MANHATAN_FUSION, self.EUCLID_FUSION)
+            self.destroyZernikeOptions()
+        
 
         self.var_desciptor.set(optionList_desc[0])
         self.om_descriptor.destroy()
