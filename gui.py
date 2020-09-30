@@ -20,6 +20,8 @@ class CBIR_SIDI(Frame):
         self.photoList = imageManager.get_photoList()
         self.indexBase = imageManager.getIndexBase()
         self.imgSize = (32, 32)
+        self.radius = IntVar()
+        self.radius.set(22)
 
         self.xmax = imageManager.get_xmax() + 20
         self.ymax = imageManager.get_ymax() + 10
@@ -55,7 +57,7 @@ class CBIR_SIDI(Frame):
         self.EUCLIDIEN = "Euclidienne"
         self.MANHATAN = "Manhatan"
         self.CHISQRT = "CHI Square"
-        self.INTERSECTION = "Intersection Hist"
+        self.BHATTACHARYYA = "Bhattacharyya"
         self.MANHATAN_FUSION = "Manhatan (Fusion)"
         self.EUCLID_FUSION = "Euclidienne (Fusion)"
         
@@ -278,7 +280,7 @@ class CBIR_SIDI(Frame):
         optionListD = (self.MANHATAN,
                       self.EUCLIDIEN,
                        self.CHISQRT, 
-                       self.INTERSECTION)
+                       self.BHATTACHARYYA)
         self.canva_dist = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_dist.pack()
 
@@ -811,9 +813,9 @@ class CBIR_SIDI(Frame):
         elif self.var_distance.get() == self.CHISQRT:
             DIST = distance.chi
             descDist[1] = self.CHISQRT
-        elif self.var_distance.get() == self.INTERSECTION:
-            DIST = distance.intersect
-            descDist[1] = self.INTERSECTION
+        elif self.var_distance.get() == self.BHATTACHARYYA:
+            DIST = distance.Bhattachatyya
+            descDist[1] = self.BHATTACHARYYA
         elif self.var_distance.get() == self.MANHATAN:
             DIST = distance.manhatan
             descDist[1] = self.MANHATAN
@@ -912,7 +914,6 @@ class CBIR_SIDI(Frame):
             pass
     def destroyZernikeOptions(self):
         try:
-            self.radius.destroy()
             self.labelRadius.destroy()
             self.entryRadius.destroy()
         except AttributeError:
@@ -930,7 +931,7 @@ class CBIR_SIDI(Frame):
             optionListD = (self.MANHATAN,
                       self.EUCLIDIEN,
                        self.CHISQRT, 
-                       self.INTERSECTION)
+                       self.BHATTACHARYYA)
             self.destroyFusionOptions()
             self.destroyZernikeOptions()
         elif self.basedOn == 2:
@@ -945,8 +946,6 @@ class CBIR_SIDI(Frame):
                       self.EUCLIDIEN)
             self.destroyFusionOptions()
 
-            self.radius = IntVar()
-            self.radius.set(17)
             self.labelRadius= Label(self.canva_desc, 
                                         bg=self.bgc,
                                         text="Radius (Zernike):")

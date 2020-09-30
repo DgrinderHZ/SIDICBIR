@@ -353,11 +353,6 @@ class Distance():
         h1 = obj[1]
         h2 = query[1]
         return cv2.compareHist(h1, h2, cv2.HISTCMP_BHATTACHARYYA)
-    
-    def HELLINGER(self, obj, query):
-        h1 = obj[1]
-        h2 = query[1]
-        return cv2.compareHist(h1, h2, cv2.HISTCMP_HELLINGER)
 
 
 
