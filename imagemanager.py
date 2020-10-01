@@ -44,10 +44,8 @@ class ImageManager:
             self.mtree = MTree(distance, max_nodes=8)
         self.imageList = []
         self.photoList = []
-        self.xmax = 0
-        self.ymax = 0
-        self.x = 0
-        self.y = 0
+        self.xmax = 125
+        self.ymax = 132
         self.indexBase = []
 
         ##############################
@@ -59,23 +57,8 @@ class ImageManager:
         for infile in glob(imgFolder):
             im = Image.open(infile)
             # Resize the image for thumbnails.
-            imSize = im.size
-            x = imSize[0]
-            y = imSize[1]
-            if x > self.x:
-                self.x = x
-            if y > self.y:
-                self.y = y
-            x = imSize[0] // 3
-            y = imSize[1] // 3
-            resized = im.resize((84, 96), Image.ANTIALIAS)
+            resized = im.resize((self.xmax, self.ymax), Image.ANTIALIAS)
             photo = ImageTk.PhotoImage(resized)
-
-            # Find the max height and width of the set of pics.
-            if x > self.xmax:
-                self.xmax = x
-            if y > self.ymax:
-                self.ymax = y
             # Add the images to the lists.
             self.imageList.append(im)
             self.photoList.append(photo)
@@ -284,12 +267,6 @@ class ImageManager:
 
     def get_ymax(self):
         return self.ymax
-
-    def get_x(self):
-        return self.x
-
-    def get_y(self):
-        return self.y
 
     def getIndexBase(self):
         return self.indexBase
