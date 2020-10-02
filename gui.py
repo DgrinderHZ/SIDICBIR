@@ -803,6 +803,7 @@ class CBIR_SIDI(Frame):
             DESC = fusionDescriptors.getMomentsAndGabor
             descDist[0] = self.COLOR_TEXTURE
         elif self.var_desciptor.get() == self.COLOR_SHAPE:
+            fusionDescriptors = FusionDescriptors(self.w1.get(), self.w2.get())
             DESC = fusionDescriptors.getMomentsAndZernike
             descDist[0] = self.COLOR_SHAPE
 
