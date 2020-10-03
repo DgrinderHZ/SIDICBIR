@@ -362,13 +362,13 @@ class FusionDescriptors():
         self.firstWeight = fw
         self.secondWeight = sw
         self.color = ColorDescriptor()
-        self.texture = TextureDescriptor()
+        self.texture = Gabor() 
         self.shape = ShapeDescriptor()
     
-    def getMomentsAndGabor(self, image, gray):
+    def getMomentsAndGabor(self, image, imgFile):
         combinedFeatures = []
         combinedFeatures.extend(self.color.getMoments(image)) 
-        combinedFeatures.extend(self.texture.getGabor(gray))
+        combinedFeatures.extend(self.texture.gabor_histogram(imgFile) )
         return combinedFeatures
     
     def getMomentsAndZernike(self, image, gray):

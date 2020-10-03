@@ -188,10 +188,9 @@ class ImageManager:
                         # 1 get image data
                         fn, pixList = self.openImage(im)
                         fn = self.cleanFileName(im.filename)
-                        image  = cv2.imread(im.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
-                        grayImgData = cv2.resize(image, self.imgSize)
+                        path  = im.filename.replace("\\","/")
                         # 2 get descriptor
-                        hu = [float(x) for x in descriptor(pixList, grayImgData)]
+                        hu = [float(x) for x in descriptor(pixList, path)]
                         obj = [fn, hu]
                         # TODO: 3 Add to M tree
                         self.addObjectsToTree(obj)

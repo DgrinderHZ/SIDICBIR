@@ -862,12 +862,10 @@ class CBIR_SIDI(Frame):
         elif self.imgManager.descDist[0] == self.COLOR_TEXTURE or \
             self.imgManager.descDist[0] == self.COLOR_SHAPE:
             # 1 get image data
-            path = self.selected.filename.replace("\\","/")
             fn, pixList = self.imgManager.openImage(self.selected)
-            image  = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-            grayImgData = cv2.resize(image, self.imgSize)
+            path = self.selected.filename.replace("\\","/")
             # 2 get descriptor
-            queryFeature  = [float(x) for x in self.imgManager.descriptor(pixList, grayImgData)]
+            queryFeature  = [float(x) for x in self.imgManager.descriptor(pixList, path)]
         elif self.imgManager.descDist[0] == self.MOMENTS_HU:
             # 1 get image data
             image  = cv2.imread(self.selected.filename.replace("\\","/"), cv2.IMREAD_GRAYSCALE)
