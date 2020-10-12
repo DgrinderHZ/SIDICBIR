@@ -16,3 +16,10 @@ VisTex/
 Texture/
 Trunk12/
 curetcol/
+dist/
+build/
+*.spec
+*.exe
+*.xlsx
+*.pyd
+*.stackdump

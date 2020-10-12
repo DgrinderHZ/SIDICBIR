@@ -5,7 +5,6 @@
     DISTANCE FUNCTIONS
 """
 from math import sqrt
-import math
 import numpy as np
 import cv2, imutils
 from mahotas import features
@@ -13,7 +12,6 @@ from scipy.spatial import distance as dist
 from skimage.filters import gabor_kernel
 from skimage import color
 from scipy import ndimage as ndi
-import scipy.misc, os 
 
 class ColorDescriptor():
     """

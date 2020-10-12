@@ -1,15 +1,13 @@
 from gui import *
-from imagemanager import * 
-from cbirtools import *
+from imagemanager import *
 
 if __name__ == '__main__':
     root = Tk()
-    # root.resizable(width=False, height=False)
-    root.iconbitmap("fsts.ico")
+    # root.resizable(widthFalse, height=False)
+    root.iconbitmap("sidicbir.ico")
     root.title("Système de recherche d'image par le conrnu - CBIR")
     #root.attributes('-fullscreen', True)
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    print(w, h )
     root.geometry("%dx%d" % (w, h))
     descDist = ["Moyenne Statistiques", "Euclidienne"]
     root.configure(bg='#e8e8e8')
@@ -17,4 +15,6 @@ if __name__ == '__main__':
     top = CBIR_SIDI(root, pix, w, h)
     root.mainloop()
 
-                          
+
+#pyinstaller.exe --onefile --icon=sidicbir.ico --paths guivenv\\Lib\\site-packages  -F --add-data "C:\\Windows\\System32\\vcomp140.dll;." --hidden-import=scipy.special.cython-special all.py
+

@@ -62,6 +62,7 @@ class ImageManager:
             # Add the images to the lists.
             self.imageList.append(im)
             self.photoList.append(photo)
+            
         if descriptor:
             # TODO: DONE  reading the saved descriptors
             # look for saved values
@@ -183,7 +184,7 @@ class ImageManager:
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hu])
                         print(".", end= " ")
-                elif descDist[0] == self.COLOR_TEXTURE or descDist[0] == self.COLOR_SHAPE:
+                elif descDist[0] == self.COLOR_TEXTURE:
                     for im in self.imageList[:]:
                         # 1 get image data
                         fn, pixList = self.openImage(im)
@@ -191,6 +192,23 @@ class ImageManager:
                         path  = im.filename.replace("\\","/")
                         # 2 get descriptor
                         hu = [float(x) for x in descriptor(pixList, path)]
+                        obj = [fn, hu]
+                        # TODO: 3 Add to M tree
+                        self.addObjectsToTree(obj)
+                        # 4 Save to desk
+                        self.saveToDesk([im.filename, hu])
+                        print(".", end= " ")
+                
+                elif descDist[0] == self.COLOR_SHAPE:
+                    for im in self.imageList[:]:
+                        # 1 get image data
+                        fn, pixList = self.openImage(im)
+                        fn = self.cleanFileName(im.filename)
+                        path  = im.filename.replace("\\","/")
+                        image  = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+                        gray = cv2.resize(image, self.imgSize)
+                        # 2 get descriptor
+                        hu = [float(x) for x in descriptor(pixList, gray)]
                         obj = [fn, hu]
                         # TODO: 3 Add to M tree
                         self.addObjectsToTree(obj)
@@ -245,9 +263,20 @@ class ImageManager:
         self.mtree.add(obj)
 
     def executeImageSearch(self, feature, k=1):
-        print("[INFO]-- Executing Image Search with k = ",k)
+        try:
+            k = int(k)
+            print("[INFO]-- Executing Image Search with k = ", k)
+            query = [None, feature]
+            result_list = list(self.mtree.k_NN_search(query, k))
+            print("[INFO]-- Search finished")
+            return result_list
+        except AttributeError:
+            pass
+    
+    def executeImageRSearch(self, feature, r):
+        print("[INFO]-- Executing Image Search with r = ", r/1000)
         query = [None, feature]
-        result_list = list(self.mtree.k_NN_search(query, k))
+        result_list = list(self.mtree.range_search(query, r/1000))
         print("[INFO]-- Search finished")
         return result_list
 

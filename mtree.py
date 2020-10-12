@@ -123,7 +123,6 @@ class MTree(object):
         for obj in iterable:
             self.add(obj)
 
-        #
     def k_NN_search(self, query_obj, k=1):
         """
         Methode k_NN_search:
@@ -141,16 +140,11 @@ class MTree(object):
         """
         k = min(k, len(self)) # on prend k < la taille de M-tree
         if k == 0: return []
-
-
         pr = []
-
         # Initialiser pr avec le Noeud root et dmin et dquery a 0
         heappush(pr, PrEntry(self.root, 0, 0))
-
         # Un objet qui va contenir les k plus proches voisins
         nn = NN(k)
-
         while pr:
             # NextNode = ChooseNode(PR);
             prEntry = heappop(pr)
@@ -161,6 +155,40 @@ class MTree(object):
             # k_NN_NodeSearch(NextNode,Q,k);
             prEntry.tree.search(query_obj, pr, nn, prEntry.d_query)
 
+        # Return the final result
+        return nn.result_list()
+    
+    def range_search(self, query_obj, r=5):
+        """
+        Methode range_search:
+            Algorithme de recherche K-plus proches voisins
+        Args:
+            query_obj: Q
+            k: nombre de voisins
+
+        Return the k objects the most similar to query_obj.
+        Implementation of the k-Nearest Neighbor algorithm.
+        Returns a list of the k closest elements to query_obj, ordered by
+        distance to query_obj (from closest to furthest).
+        If the tree has less objects than k, it will return all the
+        elements of the tree.
+        """
+        if r == 0: return []
+        pr = []
+        # Initialiser pr avec le Noeud root et dmin et dquery a 0
+        heappush(pr, PrEntry(self.root, 0, 0))
+        # Un objet qui va contenir les k plus proches voisins
+        # Un objet qui va contenir les k plus proches voisins
+        nn = NN(100)
+        while pr:
+            # NextNode = ChooseNode(PR);
+            prEntry = heappop(pr)
+            if(prEntry.dmin > r):
+                # best candidate is too far, we won't have better a answer
+                # we can stop
+                break
+            # k_NN_NodeSearch(NextNode,Q,k);
+            prEntry.tree.rangeSearch(query_obj, pr, nn, prEntry.d_query, r)
         # Return the final result
         return nn.result_list()
 
@@ -394,6 +422,10 @@ class AbstractNode(object):
     def search(self, query_obj, pr, nn, d_parent_query):
         pass
 
+    @abc.abstractmethod
+    def rangeSearch(self, query_obj, pr, nn, d_parent_query, r):
+        pass
+
 
 #_____________________________________ Classe LeafNode __________________________________#
 # Classe Represente un leaf noeud qui h'erite AbstractNode
@@ -415,8 +447,9 @@ class LeafNode(AbstractNode):
             split(self, new_entry, self.d)
 
     def covering_radius_for(self, obj):
-        """Compute minimal radius for obj so that it covers all the objects
-        of this node.
+        """
+            Compute minimal radius for obj so that it covers all the objects
+            of this node.
         """
         # Calcule le rayon couvrant
         if not self.entries:
@@ -443,12 +476,34 @@ class LeafNode(AbstractNode):
         """
         # for each entry(Oj) in N do:
         for entry in self.entries:
-            if self.could_contain_results(query_obj,nn.search_radius(),entry.distance_to_parent,d_parent_query):
+            if self.could_contain_results(query_obj, nn.search_radius(),entry.distance_to_parent,d_parent_query):
 
                 distance_entry_to_q = self.d(entry.obj, query_obj)
 
                 if distance_entry_to_q <= nn.search_radius():
+                    if(type(entry.obj) == int):
+                        nn.update(entry.obj, distance_entry_to_q)
+                    else:
+                        print("[INFO] Voila les distances ", distance_entry_to_q)
+                        nn.update(list(entry.obj), distance_entry_to_q)
+    
+    def rangeSearch(self, query_obj, pr, nn, d_parent_query, r):
+        """
+        Executes the K-NN query.
 
+        Arguments:
+            query_obj: Q
+            pr: PR
+            nn: NN
+            d_parent_query:
+        """
+        # for each entry(Oj) in N do:
+        for entry in self.entries:
+            if self.could_contain_results(query_obj, r,entry.distance_to_parent,d_parent_query):
+
+                distance_entry_to_q = self.d(entry.obj, query_obj)
+
+                if distance_entry_to_q <= r:
                     if(type(entry.obj) == int):
                         nn.update(entry.obj, distance_entry_to_q)
                     else:
@@ -524,6 +579,20 @@ class InternalNode(AbstractNode):
                     entry_dmax = d_entry_query + entry.radius
                     if entry_dmax < nn.search_radius():
                         nn.update(None, entry_dmax)
+    
+
+    def rangeSearch(self, query_obj, pr, nn, d_parent_query, r):
+        # for each entry(Or) in N do:
+        for entry in self.entries:
+            if self.could_contain_results(query_obj, r, entry, d_parent_query):
+                # Compute d(Or, Q);
+                d_entry_query = self.d(entry.obj, query_obj)
+
+                if d_entry_query <= r + entry.radius:
+                    entry.subtree.rangeSearch(query_obj, pr, nn, d_parent_query, r)
+   
+    
+    
 
 
 #_____________________________________ SPLIT FUNCTION __________________________________#
