@@ -285,7 +285,7 @@ class PrEntry(object):
 
 # <<<<<<<<<<<<<<<<< Done!
 #_____________________________________ Classes Entry: Data (keys: Btree) ____________________________________#
-class Entry(object): # Entry == Object
+class MTEntry(object): # Entry == Object
     """
 
     The leafs and internal nodes of the M-tree contain a list of instances of
@@ -436,7 +436,7 @@ class LeafNode(AbstractNode):
 
     def add(self, obj):
         distance_to_parent = self.d(obj, self.parent_entry.obj) if self.parent_entry else None
-        new_entry = Entry(obj, distance_to_parent)
+        new_entry = MTEntry(obj, distance_to_parent)
         # if N is not full just insert the new object
         if not self.is_full():
             # Store entry(On) in N
@@ -673,10 +673,10 @@ def split(existing_node, entry, d):
     #TODO: build_entry in the node method?
     # Store entries in each new routing object
     # Store in node N entries in N1 and in node N'entries in N2;
-    existing_node_entry = Entry(routing_object1, None, None, existing_node)
+    existing_node_entry = MTEntry(routing_object1, None, None, existing_node)
     existing_node.set_entries_and_parent_entry(entries1, existing_node_entry)
 
-    new_node_entry = Entry(routing_object2, None, None, new_node)
+    new_node_entry = MTEntry(routing_object2, None, None, new_node)
     new_node.set_entries_and_parent_entry(entries2, new_node_entry)
 
 

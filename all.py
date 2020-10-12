@@ -28,7 +28,6 @@ from heapq import heappush, heappop
 import collections
 from itertools import combinations, islice
 from tkinter import *
-from tkinter import Entry as TKEntry
 from tkinter import filedialog, messagebox
 
 
@@ -366,7 +365,7 @@ class Gabor(object):
     try:
       ret = feat_fn(img, kernel)
     except:
-      print("return zero")
+      #print("return zero")
       ret = np.zeros(2)
     return ret
 
@@ -457,6 +456,7 @@ from PIL import ImageTk, Image
 im = Image.open("images/1.jpg")
 print(np.shape(list(im.getdata())))
 """
+
 
 
 #_____________________________________ Algorithmes de promotion et de partition ___________________________________#
@@ -578,7 +578,6 @@ class MTree(object):
         for obj in iterable:
             self.add(obj)
 
-        #
     def k_NN_search(self, query_obj, k=1):
         """
         Methode k_NN_search:
@@ -596,16 +595,11 @@ class MTree(object):
         """
         k = min(k, len(self)) # on prend k < la taille de M-tree
         if k == 0: return []
-
-
         pr = []
-
         # Initialiser pr avec le Noeud root et dmin et dquery a 0
         heappush(pr, PrEntry(self.root, 0, 0))
-
         # Un objet qui va contenir les k plus proches voisins
         nn = NN(k)
-
         while pr:
             # NextNode = ChooseNode(PR);
             prEntry = heappop(pr)
@@ -616,6 +610,40 @@ class MTree(object):
             # k_NN_NodeSearch(NextNode,Q,k);
             prEntry.tree.search(query_obj, pr, nn, prEntry.d_query)
 
+        # Return the final result
+        return nn.result_list()
+
+    def range_search(self, query_obj, r=5):
+        """
+        Methode range_search:
+            Algorithme de recherche K-plus proches voisins
+        Args:
+            query_obj: Q
+            k: nombre de voisins
+
+        Return the k objects the most similar to query_obj.
+        Implementation of the k-Nearest Neighbor algorithm.
+        Returns a list of the k closest elements to query_obj, ordered by
+        distance to query_obj (from closest to furthest).
+        If the tree has less objects than k, it will return all the
+        elements of the tree.
+        """
+        if r == 0: return []
+        pr = []
+        # Initialiser pr avec le Noeud root et dmin et dquery a 0
+        heappush(pr, PrEntry(self.root, 0, 0))
+        # Un objet qui va contenir les k plus proches voisins
+        # Un objet qui va contenir les k plus proches voisins
+        nn = NN(100)
+        while pr:
+            # NextNode = ChooseNode(PR);
+            prEntry = heappop(pr)
+            if(prEntry.dmin > r):
+                # best candidate is too far, we won't have better a answer
+                # we can stop
+                break
+            # k_NN_NodeSearch(NextNode,Q,k);
+            prEntry.tree.rangeSearch(query_obj, pr, nn, prEntry.d_query, r)
         # Return the final result
         return nn.result_list()
 
@@ -712,7 +740,7 @@ class PrEntry(object):
 
 # <<<<<<<<<<<<<<<<< Done!
 #_____________________________________ Classes Entry: Data (keys: Btree) ____________________________________#
-class Entry(object): # Entry == Object
+class MTEntry(object): # Entry == Object
     """
 
     The leafs and internal nodes of the M-tree contain a list of instances of
@@ -849,6 +877,10 @@ class AbstractNode(object):
     def search(self, query_obj, pr, nn, d_parent_query):
         pass
 
+    @abc.abstractmethod
+    def rangeSearch(self, query_obj, pr, nn, d_parent_query, r):
+        pass
+
 
 #_____________________________________ Classe LeafNode __________________________________#
 # Classe Represente un leaf noeud qui h'erite AbstractNode
@@ -859,7 +891,7 @@ class LeafNode(AbstractNode):
 
     def add(self, obj):
         distance_to_parent = self.d(obj, self.parent_entry.obj) if self.parent_entry else None
-        new_entry = Entry(obj, distance_to_parent)
+        new_entry = MTEntry(obj, distance_to_parent)
         # if N is not full just insert the new object
         if not self.is_full():
             # Store entry(On) in N
@@ -870,8 +902,9 @@ class LeafNode(AbstractNode):
             split(self, new_entry, self.d)
 
     def covering_radius_for(self, obj):
-        """Compute minimal radius for obj so that it covers all the objects
-        of this node.
+        """
+            Compute minimal radius for obj so that it covers all the objects
+            of this node.
         """
         # Calcule le rayon couvrant
         if not self.entries:
@@ -898,12 +931,34 @@ class LeafNode(AbstractNode):
         """
         # for each entry(Oj) in N do:
         for entry in self.entries:
-            if self.could_contain_results(query_obj,nn.search_radius(),entry.distance_to_parent,d_parent_query):
+            if self.could_contain_results(query_obj, nn.search_radius(),entry.distance_to_parent,d_parent_query):
 
                 distance_entry_to_q = self.d(entry.obj, query_obj)
 
                 if distance_entry_to_q <= nn.search_radius():
+                    if(type(entry.obj) == int):
+                        nn.update(entry.obj, distance_entry_to_q)
+                    else:
+                        print("[INFO] Voila les distances ", distance_entry_to_q)
+                        nn.update(list(entry.obj), distance_entry_to_q)
 
+    def rangeSearch(self, query_obj, pr, nn, d_parent_query, r):
+        """
+        Executes the K-NN query.
+
+        Arguments:
+            query_obj: Q
+            pr: PR
+            nn: NN
+            d_parent_query:
+        """
+        # for each entry(Oj) in N do:
+        for entry in self.entries:
+            if self.could_contain_results(query_obj, r,entry.distance_to_parent,d_parent_query):
+
+                distance_entry_to_q = self.d(entry.obj, query_obj)
+
+                if distance_entry_to_q <= r:
                     if(type(entry.obj) == int):
                         nn.update(entry.obj, distance_entry_to_q)
                     else:
@@ -979,6 +1034,20 @@ class InternalNode(AbstractNode):
                     entry_dmax = d_entry_query + entry.radius
                     if entry_dmax < nn.search_radius():
                         nn.update(None, entry_dmax)
+
+
+    def rangeSearch(self, query_obj, pr, nn, d_parent_query, r):
+        # for each entry(Or) in N do:
+        for entry in self.entries:
+            if self.could_contain_results(query_obj, r, entry, d_parent_query):
+                # Compute d(Or, Q);
+                d_entry_query = self.d(entry.obj, query_obj)
+
+                if d_entry_query <= r + entry.radius:
+                    entry.subtree.rangeSearch(query_obj, pr, nn, d_parent_query, r)
+
+
+
 
 
 #_____________________________________ SPLIT FUNCTION __________________________________#
@@ -1059,10 +1128,10 @@ def split(existing_node, entry, d):
     #TODO: build_entry in the node method?
     # Store entries in each new routing object
     # Store in node N entries in N1 and in node N'entries in N2;
-    existing_node_entry = Entry(routing_object1, None, None, existing_node)
+    existing_node_entry = MTEntry(routing_object1, None, None, existing_node)
     existing_node.set_entries_and_parent_entry(entries1, existing_node_entry)
 
-    new_node_entry = Entry(routing_object2, None, None, new_node)
+    new_node_entry = MTEntry(routing_object2, None, None, new_node)
     new_node.set_entries_and_parent_entry(entries2, new_node_entry)
 
 
@@ -1161,8 +1230,8 @@ class ImageManager:
             # look for saved values
             #if os.path.isfile('indexBase.txt'):
             if withIndexBase:
-                print("[INFO] descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
-                print("[INFO]-- Adding Images to the tree")
+                #print("[INFO] descDist[0]+'_indexBase/*.csv' = ", descDist[0]+'_indexBase/*.csv')
+                #print("[INFO]-- Adding Images to the tree")
                 data = []
                 if descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
                     for index in glob(descDist[0]+'_indexBase/*.csv'):
@@ -1172,28 +1241,29 @@ class ImageManager:
                         #print(csvHist)
                         hist = np.reshape(csvHist, (17, 17, 17))
                         self.addObjectsToTree([data[0], hist])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 elif descDist[0] == self.HISTOGRAMME_HSV: # Descriptor is Histogram
                     for index in glob(descDist[0]+'_indexBase/*.csv'):
                         data = readCSV_AVG(index)
                         # TODO: Add to M tree
                         csvHist = list(map(np.float32, data[1:]))
                         self.addObjectsToTree([data[0], csvHist])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 else:
                     for index in glob(descDist[0]+'_indexBase/*.csv'):
                         data = readCSV_AVG(index)
                         # TODO: Add to M tree
                         self.addObjectsToTree([data[0], data[1:]])
-                        print(".", end= " ")
-                print("\n[INFO]-- Insertion completed.")
+                        #print(".", end= " ")
+                #print("\n[INFO]-- Insertion completed.")
                 self.saveRawImagesFolder(data[0])
+                messagebox.askyesno("L'indexation a réussi!", "Les signatures sont indexés en M-Tree.")
                 
 
             # If not already computed, then compute the indexes
             else:
                 # Compute
-                print("[INFO]-- Adding Images to the tree")
+                #print("[INFO]-- Adding Images to the tree")
                 if descDist[0] == self.MOYENNE_STATISTIQUES or\
                     descDist[0] == self.MOMENTS_STATISTIQUES or\
                         descDist[0] == self.HARALICK:
@@ -1207,7 +1277,7 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, avgs])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 elif descDist[0] == self.HISTOGRAMME_RGB: # Descriptor is Histogram
                     for im in self.imageList[:]:
                         # 1 get image data
@@ -1219,7 +1289,7 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hist.flatten()])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 elif descDist[0] == self.HISTOGRAMME_HSV: # Descriptor is Histogram
                     for im in self.imageList[:]:
                         # 1 get image data
@@ -1233,7 +1303,7 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hist])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 elif descDist[0] == self.GABOR:
                     for im in self.imageList[:]:
                         # 1 get image data
@@ -1248,7 +1318,7 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, avgs])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 elif descDist[0] == self.MOMENTS_HU:
                     for im in self.imageList[:]:
                         # 1 get image data
@@ -1262,7 +1332,7 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hu])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 elif descDist[0] == self.MOMENTS_ZERNIKE:
                     for im in self.imageList[:]:
                         # 1 get image data
@@ -1276,7 +1346,7 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hu])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 elif descDist[0] == self.COLOR_TEXTURE:
                     for im in self.imageList[:]:
                         # 1 get image data
@@ -1290,7 +1360,7 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hu])
-                        print(".", end= " ")
+                        #print(".", end= " ")
                 
                 elif descDist[0] == self.COLOR_SHAPE:
                     for im in self.imageList[:]:
@@ -1307,9 +1377,10 @@ class ImageManager:
                         self.addObjectsToTree(obj)
                         # 4 Save to desk
                         self.saveToDesk([im.filename, hu])
-                        print(".", end= " ")
+                        #print(".", end= " ")
             
-                print("\n[INFO]-- Insertion completed.")
+                #print("\n[INFO]-- Insertion completed.")
+                messagebox.askyesno("Extraction des signatures a réussie!", "Les signatures sont stocké dans: "+descDist[0]+"_indexBase/*.csv")
 
     def openImage(self, im):
         fn = self.cleanFileName(im.filename)
@@ -1356,10 +1427,10 @@ class ImageManager:
         self.mtree.add(obj)
 
     def executeImageSearch(self, feature, k=1):
-        print("[INFO]-- Executing Image Search with k = ",k)
+        #print("[INFO]-- Executing Image Search with k = ",k)
         query = [None, feature]
         result_list = list(self.mtree.k_NN_search(query, k))
-        print("[INFO]-- Search finished")
+        #print("[INFO]-- Search finished")
         return result_list
 
     # Accessor functions
@@ -1380,6 +1451,7 @@ class ImageManager:
 
     def getIndexBase(self):
         return self.indexBase
+
 
 
 
@@ -1435,14 +1507,16 @@ class CBIR_SIDI(Frame):
         self.BHATTACHARYYA = "Bhattacharyya"
         self.MANHATAN_FUSION = "Manhatan (Fusion)"
         self.EUCLID_FUSION = "Euclidienne (Fusion)"
-        
+
+        self.KVALUE = "Le nombre k : "
+
 
         # main frame
         #self.mainframe = Frame(root, bg=self.bgc, width=1366,  height=768)
         #self.mainframe.pack()
 
         self.mymenu = Menu(self.root, tearoff=False)
-        self.root.config(menu=self.mymenu)  
+        self.root.config(menu=self.mymenu)
         self.file_menu = Menu(self.mymenu, tearoff=False)
         self.mymenu.add_cascade(label="Fichier", menu=self.file_menu)
         self.new_menu = Menu(self.file_menu, tearoff=False)
@@ -1451,7 +1525,7 @@ class CBIR_SIDI(Frame):
         self.new_menu.add_command(label="Image requête", command=self.browse_buttonQ)
         self.file_menu.add_command(label="Ouvrir image", command=self.browse_buttonQ)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Enregistrer résultat", command=None)
+        self.file_menu.add_command(label="Enregistrer résultat", command=lambda: self.saveResults())
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Effacer résultat", command=lambda: self.deleteResults())
         self.file_menu.add_separator()
@@ -1463,7 +1537,7 @@ class CBIR_SIDI(Frame):
         self.view_menu = Menu(self.mymenu, tearoff=False)
         self.mymenu.add_cascade(label="Fenêtre", menu=self.view_menu)
         self.view_menu.add_command(label="Mesurer la qualité", command=lambda: self.mesurer())
-        
+
         self.desc_menu = Menu(self.view_menu, tearoff=False)
         self.view_menu.add_cascade(label="Descripteurs", menu=self.desc_menu)
         self.desc_menu.add_command(label="Basé couleur", command=lambda: self.contentType(1))
@@ -1473,68 +1547,68 @@ class CBIR_SIDI(Frame):
 
         self.mymenu.add_command(label="Aide?", command=None)
         self.mymenu.add_command(label="À propos!", command=None)
-        
+
         self.upperFrame = Frame(self.root)
         self.upperFrame.pack()
 
-        self.btn_color = Button(self.upperFrame, 
+        self.btn_color = Button(self.upperFrame,
                                  text="Basé Couleur",
                                  font=('Arial',10,'bold'),
-                                 width=41,  
-                                 pady=self.bth, 
-                                 border=5, 
+                                 width=41,
+                                 pady=self.bth,
+                                 border=5,
                                  bg=self.basedOnC[0],
-                                 fg=self.fgc, 
+                                 fg=self.fgc,
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(1))
         self.btn_color.grid(row=0, column=0)
 
-        self.btn_texture = Button(self.upperFrame, 
+        self.btn_texture = Button(self.upperFrame,
                                  text="Basé Texture",
                                  font=('Arial',10,'bold'),
-                                 width=40,  
-                                 pady=self.bth, 
-                                 border=5, 
+                                 width=40,
+                                 pady=self.bth,
+                                 border=5,
                                  bg=self.basedOnC[1],
-                                 fg=self.fgc, 
+                                 fg=self.fgc,
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(2))
         self.btn_texture.grid(row=0, column=1)
 
-        self.btn_shape = Button(self.upperFrame, 
+        self.btn_shape = Button(self.upperFrame,
                                  text="Basé Forme",
                                  font=('Arial',10,'bold'),
-                                 width=40,  
-                                 pady=self.bth, 
-                                 border=5, 
+                                 width=40,
+                                 pady=self.bth,
+                                 border=5,
                                  bg=self.basedOnC[2],
-                                 fg=self.fgc, 
+                                 fg=self.fgc,
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(3))
         self.btn_shape.grid(row=0, column=2)
 
-        self.btn_fusion = Button(self.upperFrame, 
+        self.btn_fusion = Button(self.upperFrame,
                                  text="Fusion (Combinaison)",
                                  font=('Arial',10,'bold'),
-                                 width=41, 
-                                 pady=self.bth, 
-                                 border=5, 
+                                 width=41,
+                                 pady=self.bth,
+                                 border=5,
                                  bg=self.basedOnC[3],
-                                 fg=self.fgc,  
+                                 fg=self.fgc,
                                  activebackground=self.abtc,
                                  command=lambda: self.contentType(4))
         self.btn_fusion.grid(row=0, column=3)
 
         self.lowerFrame = Frame(self.root, bg=self.bgc)
         self.lowerFrame.pack()
-        
+
         #############################
         ####### Query Frame #########
         #############################
 
 
-        self.queryFrame = LabelFrame(self.lowerFrame, 
-                                     bg=self.bgc, 
+        self.queryFrame = LabelFrame(self.lowerFrame,
+                                     bg=self.bgc,
                                      height=768,
                                      text="Section: Indexation et Recherche")
         self.queryFrame.grid(row=0, column=0)
@@ -1544,7 +1618,7 @@ class CBIR_SIDI(Frame):
         self.dbQueryPanel.pack()
 
         # Database control
-        self.lbl_dbQueryPanel = Label(self.dbQueryPanel, 
+        self.lbl_dbQueryPanel = Label(self.dbQueryPanel,
             text="OPTIONS: INDEXATION ET BASES DE DONNEES (OFFLINE)",
             fg="white", bg="gray",
             width=52,
@@ -1555,15 +1629,15 @@ class CBIR_SIDI(Frame):
         self.var_choix = StringVar()
         self.canva_BDD = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_BDD.pack()
-        self.rdio_ByImages = Radiobutton(self.canva_BDD, 
-                                        text="Dossier d'images", 
+        self.rdio_ByImages = Radiobutton(self.canva_BDD,
+                                        text="Dossier d'images",
                                         bg=self.bgc,
                                         variable=self.var_choix,
-                                        value="Dossier d'images : ", 
+                                        value="Dossier d'images : ",
                                         width=25)
 
-        self.rdio_ByCSVs = Radiobutton(self.canva_BDD, 
-                                        text="Dossier CSVs", 
+        self.rdio_ByCSVs = Radiobutton(self.canva_BDD,
+                                        text="Dossier CSVs",
                                         bg=self.bgc,
                                         variable=self.var_choix,
                                         value="Dossier CSVs : ",
@@ -1571,29 +1645,29 @@ class CBIR_SIDI(Frame):
         self.var_choix.set("Dossier d'images : ")
         self.rdio_ByImages.grid(row=0, column=0)
         self.rdio_ByCSVs.grid(row=0, column=1)
-        
+
         ######## Folder selection
         self.folder_path = StringVar()
         self.canva_folder = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_folder.pack()
 
-        self.label_folder = Label(self.canva_folder, 
+        self.label_folder = Label(self.canva_folder,
                                   textvariable=self.var_choix,
                                   bg=self.bgc)
         self.label_folder.grid(row=0, column=0)
-        self.entryFolder = TKEntry(self.canva_folder, width=40, textvariable=self.folder_path)
+        self.entryFolder = Entry(self.canva_folder, width=40, textvariable=self.folder_path)
         self.entryFolder.grid(row=0, column=1)
-        self.btn_browse = Button(self.canva_folder, 
-                                    text="Choisir", 
-                                    border=2, 
+        self.btn_browse = Button(self.canva_folder,
+                                    text="Choisir",
+                                    border=2,
                                     bg="#989ea6",
-                                    fg=self.fgc, 
+                                    fg=self.fgc,
                                     activebackground=self.abtc,
                                     command=self.browse_button)
         self.btn_browse.grid(row=0, column=2)
-        
+
         #________________________________________________________
-        self.lbl_distances = Label(self.dbQueryPanel, 
+        self.lbl_distances = Label(self.dbQueryPanel,
             text="OPTIONS: CHOIX DE DESCRIPTEUR",
             fg="white", bg="gray",
             width=52, height=1,
@@ -1611,17 +1685,17 @@ class CBIR_SIDI(Frame):
         self.canva_desc = Canvas(self.offlineOptions, bg=self.bgc)
         self.canva_desc.grid(row=0, column=0)
 
-        self.label_desc = Label(self.canva_desc, 
+        self.label_desc = Label(self.canva_desc,
                                 bg=self.bgc,
                                 text="Descripteur : ")
         self.label_desc.grid(row=0, column=0)
         self.var_desciptor.set(optionList_desc[0])
-        self.om_descriptor = OptionMenu(self.canva_desc, 
+        self.om_descriptor = OptionMenu(self.canva_desc,
                             self.var_desciptor,
                              *optionList_desc
                     )
         self.om_descriptor.grid(row=0, column=1)
-        
+
         #___________________________________________________________________________#
         self.imageOptions = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.imageOptions.pack()
@@ -1631,25 +1705,25 @@ class CBIR_SIDI(Frame):
         self.canva_typeImg = Canvas(self.imageOptions, bg=self.bgc)
         self.canva_typeImg.grid(row=0, column=1)
 
-        self.label_typeImg = Label(self.canva_typeImg, 
+        self.label_typeImg = Label(self.canva_typeImg,
                                     text="Type d'images : ",
                                     bg=self.bgc)
         self.label_typeImg.grid(row=0, column=0)
         self.var_typeImg.set(optionList_ti[0])
         self.om_imgType = OptionMenu(self.canva_typeImg, self.var_typeImg, *optionList_ti)
         self.om_imgType.grid(row=0, column=1)
-        
+
         self.imgSizeVar = IntVar()
         self.imgSizeVar.set(32)
-        self.labelImgSize= Label(self.imageOptions, 
+        self.labelImgSize= Label(self.imageOptions,
                                     bg=self.bgc,
                                     text="Taille d'images N (NxN):")
         self.labelImgSize.grid(row=0, column=2)
         self.entryImgSize = Spinbox(self.imageOptions, width=4, from_ = 8, to = 80, textvariable=self.imgSizeVar)
         self.entryImgSize.grid(row=0, column=3)
-    
+
         #__________________________________________________
-        self.lbl_distances = Label(self.dbQueryPanel, 
+        self.lbl_distances = Label(self.dbQueryPanel,
             text="OPTIONS: CHOIX DE LA MESURE DE SIMILARITE",
             fg="white", bg="gray",
             width=52, height=1,
@@ -1660,32 +1734,32 @@ class CBIR_SIDI(Frame):
         self.var_distance = StringVar()
         optionListD = (self.MANHATAN,
                       self.EUCLIDIEN,
-                       self.CHISQRT, 
+                       self.CHISQRT,
                        self.BHATTACHARYYA)
         self.canva_dist = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_dist.pack()
 
-        self.label_dist = Label(self.canva_dist, 
+        self.label_dist = Label(self.canva_dist,
                                 bg=self.bgc,
                                 text="Choix du distance : ")
         self.label_dist.grid(row=0, column=0)
-        
+
         self.var_distance.set(optionListD[0])
         self.omd = OptionMenu(self.canva_dist, self.var_distance, *optionListD)
         self.omd.grid(row=0, column=1)
 
-        self.btn_indexer = Button(self.dbQueryPanel, 
+        self.btn_indexer = Button(self.dbQueryPanel,
                                  text="Indexer",
                                  font=('Arial',10,'bold'),
-                                 width=10, 
-                                 border=5, 
+                                 width=10,
+                                 border=5,
                                  bg=self.btc,
-                                 fg=self.fgc, 
+                                 fg=self.fgc,
                                  activebackground=self.abtc,
                                  command=lambda: self.indexer())
         self.btn_indexer.pack()
         ######## Query image selection
-        self.lbl_descriptrs = Label(self.dbQueryPanel, 
+        self.lbl_descriptrs = Label(self.dbQueryPanel,
             text="OPTIONS: CHOIX DE REQUETE (ONLINE)",
             fg="white", bg="gray",
             width=52, height=1,
@@ -1699,18 +1773,18 @@ class CBIR_SIDI(Frame):
                                 bg=self.bgc,
                                 text="Image requête:")
         self.label_query.grid(row=0, column=0)
-        self.entryQuery = TKEntry(self.canva_query, width=40, textvariable=self.query_path)
+        self.entryQuery = Entry(self.canva_query, width=40, textvariable=self.query_path)
         self.entryQuery.grid(row=0, column=1)
-        self.btn_browseQ = Button(self.canva_query, 
-                                    text="Choisir",  
-                                    border=2, 
+        self.btn_browseQ = Button(self.canva_query,
+                                    text="Choisir",
+                                    border=2,
                                     bg="#989ea6",
-                                    fg=self.fgc, 
+                                    fg=self.fgc,
                                     activebackground=self.abtc,
                                     command=self.browse_buttonQ)
         self.btn_browseQ.grid(row=0, column=2)
-        
-        
+
+
         # selected image window
         self.selectedImage = Label(self.dbQueryPanel,
                                    width=320,
@@ -1723,35 +1797,35 @@ class CBIR_SIDI(Frame):
         ########### Buttond
         self.canva_btns = Canvas(self.dbQueryPanel)
         self.canva_btns.pack()
-        self.btn_search = Button(self.canva_btns, 
+        self.btn_search = Button(self.canva_btns,
                                  text="Rechercher",
                                  font=('Arial',10,'bold'),
-                                 width=15, 
-                                 pady=self.bth, 
-                                 border=5, 
+                                 width=15,
+                                 pady=self.bth,
+                                 border=5,
                                  bg=self.btc,
-                                 fg=self.fgc, 
+                                 fg=self.fgc,
                                  activebackground=self.abtc,
                                  command=lambda: self.find())
         self.btn_search.grid(row=0, column=0)
 
-        self.btn_reset = Button(self.canva_btns, 
+        self.btn_reset = Button(self.canva_btns,
                                 text="Visualiser",
                                 font=('Arial',10,'bold'),
-                                width=15, 
-                                pady=self.bth, 
-                                border=5, 
+                                width=15,
+                                pady=self.bth,
+                                border=5,
                                 bg="#CF1F1F",
-                                fg=self.fgc, 
+                                fg=self.fgc,
                                 activebackground=self.abtc,
                                 command=lambda: self.reset())
         self.btn_reset.grid(row=0, column=1)
         #___________________________________________________________________________#
-    
+
 
         #__________________________________________________________________________________
 
-        self.lbl_search = Label(self.dbQueryPanel, 
+        self.lbl_search = Label(self.dbQueryPanel,
             text="OPTIONS: RECHERCHE M-TREE",
             fg="white", bg="gray",
             width=52,
@@ -1760,17 +1834,17 @@ class CBIR_SIDI(Frame):
         self.lbl_search.pack(pady=2)
 
         self.var_searchMethod = StringVar()
-        self.var_searchMethod.set("Le nombre k : ")
+        self.var_searchMethod.set(self.KVALUE)
         self.canva_SM = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_SM.pack()
-        self.knn = Radiobutton(self.canva_SM, 
-                                text="k-NN", 
+        self.knn = Radiobutton(self.canva_SM,
+                                text="k-NN",
                                 bg=self.bgc,
                                 variable=self.var_searchMethod,
-                                value="Le nombre k : ",
+                                value=self.KVALUE,
                                 width =25)
-        self.rquery = Radiobutton(self.canva_SM, 
-                                  text="Range query", 
+        self.rquery = Radiobutton(self.canva_SM,
+                                  text="Range query",
                                   bg=self.bgc,
                                   variable=self.var_searchMethod,
                                   value="Le rayon r : ",
@@ -1782,12 +1856,12 @@ class CBIR_SIDI(Frame):
         self.KRange.set(50)
         self.canva_KRange = Canvas(self.dbQueryPanel, bg=self.bgc)
         self.canva_KRange.pack()
-        self.label_KRange = Label(self.canva_KRange, 
+        self.label_KRange = Label(self.canva_KRange,
                                     bg=self.bgc,
                                     textvariable=self.var_searchMethod)
         self.label_KRange.grid(row=0, column=0)
-        self.entryKRange = Spinbox(self.canva_KRange, width=4, 
-                                    from_ = 0, to = 100, 
+        self.entryKRange = Spinbox(self.canva_KRange, width=4,
+                                    from_ = 0, to = 1000000,
                                     textvariable=self.KRange)
         self.entryKRange.grid(row=0, column=1)
 
@@ -1796,15 +1870,15 @@ class CBIR_SIDI(Frame):
         ##################################
         # results frame
         ##################################
-        
-        self.resultsViewFrame = LabelFrame(self.lowerFrame, 
-                                           bg=self.bgc, 
+
+        self.resultsViewFrame = LabelFrame(self.lowerFrame,
+                                           bg=self.bgc,
                                            text="Section: Résultats de recherche")
         self.resultsViewFrame.grid(row=0, column=1)
 
         instr = Label(self.resultsViewFrame,
-                      bg=self.bgc, 
-                      fg='#aaaaaa',
+                      bg=self.bgc,
+                      fg='#aaa4bb',
                       text="Click l'image pour selectioner.")
         instr.pack()
 
@@ -1838,11 +1912,44 @@ class CBIR_SIDI(Frame):
                                command=lambda: self.nextPage())
         self.btn_next.pack(side=RIGHT)
 
-        
+
     def mesurer(self):
         self.mesurUI = Toplevel(self.root)
-        self.mesurUI.geometry("600x600")
+        self.mesurUI.geometry("760x600")
+        self.mesurUI.title("Mesure de la pertinence de la requête.")
         self.mesurUI.iconbitmap("sidicbir.ico")
+
+        self.width_titre = 75
+        self.bg_titre = "#4ECDC4"
+        self.bg_tab = "white"
+        self.bg_resoudre = 'green'
+        self.bg_effacer = '#FF6B6B'
+        self.fg_text = "green"
+        self.topsection = Canvas(self.mesurUI, bg=self.bg_titre)
+        self.topsection.pack(pady=10)
+
+        self.titre = Label(self.topsection)
+        self.titre.grid(row=0, column=0)
+        self.topLabel = Label(self.titre,
+                              text="MESURE DE PERTINENCE D'UNE REQUETE DE RECHERCHE D'IMAGE PAR CONTENU",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabel.pack()
+        self.topLabel1 = Label(self.titre,
+                              text="AVEC LE SYSTEM SIDICBIR",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabel1.pack()
+        self.topLabel1 = Label(self.titre,
+                              text="-v.2020.01-",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabel1.pack()
+
+
 
         self.baseCanva = Canvas(self.mesurUI)
         self.baseCanva.pack(pady=5)
@@ -1852,28 +1959,28 @@ class CBIR_SIDI(Frame):
                                 text="Dossier de la base d'image utilsée:")
         self.label_base.grid(row=0, column=0)
 
-        self.entryBase = TKEntry(self.baseCanva, width=50, textvariable=self.folder_path)
+        self.entryBase = Entry(self.baseCanva, width=75, textvariable=self.folder_path)
         self.entryBase.grid(row=0, column=1)
 
         self.classCanva = Canvas(self.mesurUI)
         self.classCanva.pack(pady=5)
         self.label_queryClass = Label(self.classCanva,
                                 bg=self.bgc,
-                                font=('Arial',8,'bold'),
+                                font=('Arial',12,'bold'),
                                 text="Classe d'image requête:")
         self.label_queryClass.grid(row=0, column=0)
 
         self.classe = StringVar()
         self.classe.set(self.imgManager.cleanFileName(self.selected.filename))
-        self.entryQueryClass = TKEntry(self.classCanva, width=20, textvariable=self.classe)
+        self.entryQueryClass = Entry(self.classCanva, width=20, textvariable=self.classe)
         self.entryQueryClass.grid(row=0, column=1)
-        self.btn_browseQC = Button(self.mesurUI, text="Afficher la matrice de confusion", 
+        self.btn_browseQC = Button(self.mesurUI, text="Afficher la matrice de confusion",
                                     font=('Arial',10,'bold'),
-                                    width=40,  
-                                    pady=self.bth, 
-                                    border=5, 
+                                    width=40,
+                                    pady=self.bth,
+                                    border=5,
                                     bg=self.btc,
-                                    fg=self.fgc, 
+                                    fg=self.fgc,
                                     activebackground=self.abtc,
                                     command=lambda: self.confusionMatrix())
         self.btn_browseQC.pack()
@@ -1884,7 +1991,7 @@ class CBIR_SIDI(Frame):
         self.ResCanva.pack(pady=5)
 
         self.mesurUI.mainloop()
-    
+
     def confusionMatrix(self):
         self.ResCanva.destroy()
         self.CMcanva.destroy()
@@ -1916,7 +2023,7 @@ class CBIR_SIDI(Frame):
                     found += 1
                 else:
                     tmp += 1
-        
+
         for i in range(len(pred)):
             if  not(first <= i <= first+all-1) and tmp > 0:
                 pred[i] = 1
@@ -1939,29 +2046,29 @@ class CBIR_SIDI(Frame):
 
         self.positif = IntVar()
         self.positif.set(10)
-        
+
         self.canvaPositif = Canvas(view, bg=self.bgc)
         self.canvaPositif.pack(pady=5)
-        self.labelPositif = Label(self.canvaPositif, 
+        self.labelPositif = Label(self.canvaPositif,
                                     bg=self.bgc,
                                     font=('Arial',8,'bold'),
                                     text="Nombre total d'images pertinentes:")
         self.labelPositif.grid(row=0, column=0)
-        self.entryPositif = Spinbox(self.canvaPositif, width=4, from_ = 0, to = 100, 
-                                    
+        self.entryPositif = Spinbox(self.canvaPositif, width=4, from_ = 0, to = 100,
+
                                     textvariable=self.positif)
         self.entryPositif.grid(row=0, column=1)
-        
+
         self.vp = IntVar()
         self.vp.set(10)
         self.VPCanva = Canvas(view, bg=self.bgc)
         self.VPCanva.pack()
-        self.VPLabel = Label(self.VPCanva, 
+        self.VPLabel = Label(self.VPCanva,
                                     bg=self.bgc,
                                     font=('Arial',8,'bold'),
                                     text="Nombre d'images pertinentes retrouvées:")
         self.VPLabel.grid(row=0, column=0)
-        self.VPEntry = Spinbox(self.VPCanva, width=4, from_ = 0, to = 100, 
+        self.VPEntry = Spinbox(self.VPCanva, width=4, from_ = 0, to = 100,
                                 textvariable=self.vp)
         self.VPEntry.grid(row=0, column=1)
 
@@ -1972,13 +2079,13 @@ class CBIR_SIDI(Frame):
             pass
         self.foundCanva = Canvas(view, bg=self.bgc)
         self.foundCanva.pack()
-        self.foundLabel = Label(self.foundCanva, 
+        self.foundLabel = Label(self.foundCanva,
                                     bg=self.bgc,
                                     font=('Arial',8,'bold'),
                                     text="Nombre total d'images retrouvées:")
         self.foundLabel.grid(row=0, column=0)
-        self.foundEntry = Spinbox(self.foundCanva, width=4, 
-                               from_ = 0, to = 100, 
+        self.foundEntry = Spinbox(self.foundCanva, width=4,
+                               from_ = 0, to = 100,
                                textvariable=self.found)
         self.foundEntry.grid(row=0, column=1)
         #________________________
@@ -1996,8 +2103,8 @@ class CBIR_SIDI(Frame):
                                 width=20,
                                 font=('Arial',10,'bold'),
                                 text="Positif",
-                                border=1, 
-                                pady=1, 
+                                border=1,
+                                pady=1,
                                 padx=2
                                 )
         self.label_positif.grid(row=0, column=1)
@@ -2006,7 +2113,7 @@ class CBIR_SIDI(Frame):
                                 width=20,
                                 font=('Arial',10,'bold'),
                                 text="Négatif",
-                                border=1, 
+                                border=1,
                                 pady=1,
                                 padx=2)
         self.label_negatif.grid(row=0, column=2)
@@ -2018,17 +2125,17 @@ class CBIR_SIDI(Frame):
                                 width=18,
                                 font=('Arial',10,'bold'),
                                 text=" Vrai ",
-                                border=1, 
-                                pady=1, 
+                                border=1,
+                                pady=1,
                                 )
         self.label_true.grid(row=0, column=0)
 
-        self.entryTP = Label(self.trueCanva, width=23, 
+        self.entryTP = Label(self.trueCanva, width=23,
                                         text=str(tp),
                                         bg="#8aed8a")
         self.entryTP.grid(row=0, column=1)
 
-        self.entryTN = Label(self.trueCanva, width=23, 
+        self.entryTN = Label(self.trueCanva, width=23,
                                         text=str(tn),
                                         bg="#d7fce4")
         self.entryTN.grid(row=0, column=2)
@@ -2040,30 +2147,30 @@ class CBIR_SIDI(Frame):
                                 width=18,
                                 font=('Arial',10,'bold'),
                                 text="Faux",
-                                border=1, 
-                                pady=1, 
+                                border=1,
+                                pady=1,
                                 )
         self.label_false.grid(row=0, column=0)
 
-        self.entryFP = Label(self.falseCanva, 
-                                width=23, 
+        self.entryFP = Label(self.falseCanva,
+                                width=23,
                                 text=str(fp),
                                 bg="#f78f95")
         self.entryFP.grid(row=0, column=1)
 
-        self.entryFN = Label(self.falseCanva, width=23, 
+        self.entryFN = Label(self.falseCanva, width=23,
                                         text=str(fn),
                                         bg="#7b9c5a")
         self.entryFN.grid(row=0, column=2)
 
-        self.btn_calcul = Button(view, 
+        self.btn_calcul = Button(view,
                                  text="Mesurer la pertinence",
                                  font=('Arial',10,'bold'),
-                                 width=40,  
-                                 pady=self.bth, 
-                                 border=5, 
+                                 width=40,
+                                 pady=self.bth,
+                                 border=5,
                                  bg=self.btc,
-                                 fg=self.fgc, 
+                                 fg=self.fgc,
                                  activebackground=self.abtc,
                                  command=lambda: self.getQualityMeasures())
         self.btn_calcul.pack(pady=5)
@@ -2072,7 +2179,7 @@ class CBIR_SIDI(Frame):
 
 
 
-                        
+
 
 
 
@@ -2093,8 +2200,8 @@ class CBIR_SIDI(Frame):
         self.table.pack(pady=10)
         lst = [["Rappel", "Précision", "F-mesure"], list(map(lambda x: round(x, 4), [recall, precision, F_score]))]
         self.Table(self.table, lst , bg="white")
-        
-    
+
+
     def Table(self, canva, lst, bg):
         # code for creating table
         total_rows = 2
@@ -2103,15 +2210,15 @@ class CBIR_SIDI(Frame):
         for i in range(total_rows):
             for j in range(total_columns):
                 if i == 0:
-                    self.e = TKEntry(canva, width=16, 
-                                    fg='white', 
-                                    font=('Arial',10,'bold'), 
+                    self.e = Entry(canva, width=16,
+                                    fg='white',
+                                    font=('Arial',10,'bold'),
                                     justify='center',
                                     bg="gray")
                 else:
-                    self.e = TKEntry(canva, width=16, 
-                                    fg='blue', 
-                                    font=('Arial',10,'bold'), 
+                    self.e = Entry(canva, width=16,
+                                    fg='blue',
+                                    font=('Arial',10,'bold'),
                                     justify='center',bg=bg)
                 self.e.grid(row=i, column=j)
                 self.e.insert(END, lst[i][j])
@@ -2119,9 +2226,9 @@ class CBIR_SIDI(Frame):
 
 
 
-        
 
-        
+
+
 
     def contentType(self, code):
         self.basedOnC[code-1], self.basedOnC[self.basedOn-1] = self.basedOnC[self.basedOn-1], self.basedOnC[code-1]
@@ -2150,10 +2257,9 @@ class CBIR_SIDI(Frame):
         #TODO: Add pop up window
         if self.folder_path.get() == "":
             messagebox.showwarning("Message d'alert!", "Veuillez choisir un dossier SVP!")
-            print("[INFO] SELECTED FOLDER: empty path")
-        else:
-            print("[INFO] SELECTED FOLDER: ", self.folder_path.get())
-        
+            #print("[INFO] SELECTED FOLDER: empty path")
+
+
         # **************** CHOIX: DESCRIPTOR n DISTANCE *****************
         colorDescriptor = ColorDescriptor()
         textureDescriptor = TextureDescriptor()
@@ -2200,7 +2306,7 @@ class CBIR_SIDI(Frame):
             DESC = fusionDescriptors.getMomentsAndZernike
             descDist[0] = self.COLOR_SHAPE
 
-        
+
         if self.var_distance.get() == self.EUCLIDIEN:
             DIST = distance.euclid
             descDist[1] = self.EUCLIDIEN
@@ -2216,10 +2322,10 @@ class CBIR_SIDI(Frame):
         elif self.var_distance.get() == self.MANHATAN_FUSION:
             DIST = fusionDescriptors.manhatanDistance
             descDist[1] = self.MANHATAN_FUSION
-        
+
         print("[INFO] DESC = ", descDist[0])
         print("[INFO] DIST = ", descDist[1])
-       
+
         # TODO: Save Images/Indexes database related folder
         imgFolder = self.folder_path.get()
         if self.var_choix.get() == "Dossier CSVs : ":
@@ -2230,10 +2336,12 @@ class CBIR_SIDI(Frame):
             self.imgManager.saveRawImagesFolder(data[0])
             imgFolder = self.imgManager.imgFolder
             print("[DEBUG] Raw Images Folder", imgFolder)
-        
+
         imageFormat = self.var_typeImg.get()
         self.imgSize = (self.imgSizeVar.get(), self.imgSizeVar.get())
+
         self.imgManager = ImageManager(self.root, DESC, DIST, descDist, self.imgSize, imgFolder, imageFormat, self.withIndexBase, self.radius.get())
+
         self.imageList = self.imgManager.get_imageList()
         self.photoList = self.imgManager.get_photoList()
         self.indexBase = self.imgManager.getIndexBase()
@@ -2280,23 +2388,33 @@ class CBIR_SIDI(Frame):
         else:
             im = cv2.imread(self.selected.filename)
             im = cv2.resize(im, self.imgSize)
-            queryFeature = self.imgManager.descriptor(im)
-        print(len(queryFeature))
-        self.results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
+            try:
+                queryFeature = self.imgManager.descriptor(im)
+            except TypeError:
+                messagebox.showwarning("Message d'alert", "Veuillez séléctionner/choisir une image SVP")
+
+        if self.var_searchMethod.get() == self.KVALUE:
+            self.results = self.imgManager.executeImageSearch(queryFeature, self.KRange.get())
+        else:
+            self.results = self.imgManager.executeImageRSearch(queryFeature, self.KRange.get())
         self.currentImageList, self.currentPhotoList = [], []
         self.resultsLenght = 0
+        self.tempList = []
         for img in self.results:
             if img != 'None':
                 self.resultsLenght += 1
                 if self.withIndexBase:
                     im = PIL.Image.open(img) #.replace("/", "")
+                    self.tempList.append(self.imgManager.cleanFileName(img))
                 else:
                     im = PIL.Image.open(self.imgManager.imgFolder + "/" + img) #.replace("/", "")
+                    self.tempList.append(img)
                 # Resize the image for thumbnails.
                 resized = im.resize((128, 128), PIL.Image.ANTIALIAS)
                 photo = ImageTk.PhotoImage(resized)
                 self.currentImageList.append(im)
                 self.currentPhotoList.append(photo)
+
 
         iL = self.currentImageList[:24]
         pL = self.currentPhotoList[:24]
@@ -2305,9 +2423,9 @@ class CBIR_SIDI(Frame):
 
     def destroyFusionOptions(self):
         try:
-            self.label_cw.destroy() 
+            self.label_cw.destroy()
             self.entryCW.destroy()
-            self.label_tosw.destroy() 
+            self.label_tosw.destroy()
             self.entryToSW.destroy()
         except AttributeError:
             pass
@@ -2329,7 +2447,7 @@ class CBIR_SIDI(Frame):
                            self.HISTOGRAMME_HSV)
             optionListD = (self.MANHATAN,
                       self.EUCLIDIEN,
-                       self.CHISQRT, 
+                       self.CHISQRT,
                        self.BHATTACHARYYA)
             self.destroyFusionOptions()
             self.destroyZernikeOptions()
@@ -2345,62 +2463,62 @@ class CBIR_SIDI(Frame):
                       self.EUCLIDIEN)
             self.destroyFusionOptions()
 
-            self.labelRadius= Label(self.canva_desc, 
+            self.labelRadius= Label(self.canva_desc,
                                         bg=self.bgc,
                                         text="Radius (Zernike):")
             self.labelRadius.grid(row=0, column=2)
-            self.entryRadius = Spinbox(self.canva_desc, width=4, 
-                                        from_ = 8, to = 80, 
+            self.entryRadius = Spinbox(self.canva_desc, width=4,
+                                        from_ = 8, to = 80,
                                         textvariable=self.radius)
             self.entryRadius.grid(row=0, column=3)
         elif self.basedOn == 4:
             self.w1 = DoubleVar()
             self.w1.set(0.5)
-            self.label_cw = Label(self.canva_dist, 
+            self.label_cw = Label(self.canva_dist,
                                         bg=self.bgc,
                                         text="W1")
             self.label_cw.grid(row=0, column=2)
-            self.entryCW = Spinbox(self.canva_dist, 
-                                    width=4, 
-                                    from_ = 0, to = 1, 
+            self.entryCW = Spinbox(self.canva_dist,
+                                    width=4,
+                                    from_ = 0, to = 1,
                                     textvariable=self.w1)
             self.entryCW.grid(row=0, column=3)
 
             self.w2 = DoubleVar()
             self.w2.set(0.5)
-            self.label_tosw = Label(self.canva_dist, 
+            self.label_tosw = Label(self.canva_dist,
                                         bg=self.bgc,
                                         text="W2")
             self.label_tosw.grid(row=0, column=4)
-            self.entryToSW = Spinbox(self.canva_dist, 
-                                    width=4, 
-                                    from_ = 0, to = 1, 
+            self.entryToSW = Spinbox(self.canva_dist,
+                                    width=4,
+                                    from_ = 0, to = 1,
                                     textvariable=self.w2)
             self.entryToSW.grid(row=0, column=5)
 
             optionList_desc = (self.COLOR_TEXTURE, self.COLOR_SHAPE)
             optionListD = (self.MANHATAN_FUSION, self.EUCLID_FUSION)
             self.destroyZernikeOptions()
-        
+
 
         self.var_desciptor.set(optionList_desc[0])
         self.om_descriptor.destroy()
 
-        self.om_descriptor = OptionMenu(self.canva_desc, 
-                                        self.var_desciptor, 
+        self.om_descriptor = OptionMenu(self.canva_desc,
+                                        self.var_desciptor,
                                         *optionList_desc)
         self.om_descriptor.grid(row=0, column=1)
 
         self.omd.destroy()
         self.var_distance.set(optionListD[0])
-        self.omd = OptionMenu(self.canva_dist, 
-                              self.var_distance, 
+        self.omd = OptionMenu(self.canva_dist,
+                              self.var_distance,
                               *optionListD)
         self.omd.grid(row=0, column=1)
 
         self.deleteResults()
-        
-    
+
+
     def deleteResults(self):
         self.canvas.destroy()
         self.canvas = Canvas(self.resultPanel ,
@@ -2417,6 +2535,7 @@ class CBIR_SIDI(Frame):
         il = self.currentImageList[:24]
         pl = self.currentPhotoList[:24]
         self.update_results((il, pl))
+
 
     def get_pos(self, filename):
         """
@@ -2436,7 +2555,7 @@ class CBIR_SIDI(Frame):
         Updates the photos in results window (used from sample)
         :param st: (image, photo)
         """
-        
+
         txt = "Page "+str(self.currentPage + 1)+" of "+str(self.totalPages)
         self.pageLabel.configure(text=txt)
         cols = 6 # number of columns
@@ -2525,6 +2644,15 @@ class CBIR_SIDI(Frame):
         if len(self.photoList) % 24 > 0:
             pages += 1
         return pages
+
+    def saveResults(self):
+        dirName = filedialog.askdirectory()
+        for im, name in zip(self.currentImageList, self.tempList):
+            im.save(dirName + "\\" + name)
+
+
+
+
     
     
 
@@ -2536,10 +2664,9 @@ if __name__ == '__main__':
     root = Tk()
     # root.resizable(widthFalse, height=False)
     root.iconbitmap("sidicbir.ico")
-    root.title("Système de recherche d'image par le conrnu - CBIR")
+    root.title("Système de recherche d'image par le conrnu - CBIR v.2020.01")
     #root.attributes('-fullscreen', True)
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    print(w, h )
     root.geometry("%dx%d" % (w, h))
     descDist = ["Moyenne Statistiques", "Euclidienne"]
     root.configure(bg='#e8e8e8')

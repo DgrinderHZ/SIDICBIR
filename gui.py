@@ -37,7 +37,7 @@ class CBIR_SIDI(Frame):
         self.basedOnC = ["#CF1F1F", "grey", "grey", "grey"]
         self.bth = 5 # button height
         self.currentPage = 0
-        self.totalPages = self.get_totalPages()
+        self.totalPages = self.get_totalPages(self.photoList)
         self.weights = []
 
         # CONSTANTS
@@ -79,7 +79,7 @@ class CBIR_SIDI(Frame):
         self.new_menu.add_command(label="Image requête", command=self.browse_buttonQ)
         self.file_menu.add_command(label="Ouvrir image", command=self.browse_buttonQ)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Enregistrer résultat", command=None)
+        self.file_menu.add_command(label="Enregistrer résultat", command=lambda: self.saveResults())
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Effacer résultat", command=lambda: self.deleteResults())
         self.file_menu.add_separator()
@@ -415,7 +415,7 @@ class CBIR_SIDI(Frame):
                                     textvariable=self.var_searchMethod)
         self.label_KRange.grid(row=0, column=0)
         self.entryKRange = Spinbox(self.canva_KRange, width=4, 
-                                    from_ = 0, to = 1000, 
+                                    from_ = 0, to = 1000000,
                                     textvariable=self.KRange)
         self.entryKRange.grid(row=0, column=1)
 
@@ -432,7 +432,7 @@ class CBIR_SIDI(Frame):
 
         instr = Label(self.resultsViewFrame,
                       bg=self.bgc, 
-                      fg='#aaaaaa',
+                      fg='#aaa4bb',
                       text="Click l'image pour selectioner.")
         instr.pack()
 
@@ -921,18 +921,22 @@ class CBIR_SIDI(Frame):
             self.results = self.imgManager.executeImageRSearch(queryFeature, self.KRange.get())
         self.currentImageList, self.currentPhotoList = [], []
         self.resultsLenght = 0
+        self.tempList = []
         for img in self.results:
             if img != 'None':
                 self.resultsLenght += 1
                 if self.withIndexBase:
                     im = Image.open(img) #.replace("/", "")
+                    self.tempList.append(self.imgManager.cleanFileName(img))
                 else:
                     im = Image.open(self.imgManager.imgFolder + "/" + img) #.replace("/", "")
+                    self.tempList.append(img)
                 # Resize the image for thumbnails.
                 resized = im.resize((128, 128), Image.ANTIALIAS)
                 photo = ImageTk.PhotoImage(resized)
                 self.currentImageList.append(im)
                 self.currentPhotoList.append(photo)
+
 
         iL = self.currentImageList[:24]
         pL = self.currentPhotoList[:24]
@@ -1157,10 +1161,16 @@ class CBIR_SIDI(Frame):
         self.update_results((iL, pL))
 
     # computes total pages in results
-    def get_totalPages(self):
-        pages = len(self.photoList) // 24
-        if len(self.photoList) % 24 > 0:
+    def get_totalPages(self, list):
+        pages = len(list) // 24
+        if len(list) % 24 > 0:
             pages += 1
         return pages
+
+    def saveResults(self):
+        dirName = filedialog.askdirectory()
+        for im, name in zip(self.currentImageList, self.tempList):
+            im.save(dirName + "\\" + name)
+
     
     
