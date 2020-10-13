@@ -1545,8 +1545,8 @@ class CBIR_SIDI(Frame):
         self.desc_menu.add_command(label="Basé forme", command=lambda: self.contentType(3))
         self.desc_menu.add_command(label="Composé", command=lambda: self.contentType(4))
 
-        self.mymenu.add_command(label="Aide?", command=None)
-        self.mymenu.add_command(label="À propos!", command=None)
+        self.mymenu.add_command(label="Aide?", command=lambda: self.aide())
+        self.mymenu.add_command(label="À propos!", command=lambda: self.aPropos())
 
         self.upperFrame = Frame(self.root)
         self.upperFrame.pack()
@@ -2650,14 +2650,72 @@ class CBIR_SIDI(Frame):
         for im, name in zip(self.currentImageList, self.tempList):
             im.save(dirName + "\\" + name)
 
+    def aPropos(self):
+        self.apUI = Toplevel(self.root)
+        self.apUI.geometry("760x130")
+        self.apUI.title("À propos!")
+        self.apUI.iconbitmap("sidicbir.ico")
 
+        self.width_titre = 75
+        self.bg_titre = "#4ECDC4"
+        self.bg_tab = "white"
+        self.bg_resoudre = 'green'
+        self.bg_effacer = '#FF6B6B'
+        self.fg_text = "green"
+        self.topsectionap = Canvas(self.apUI, bg=self.bg_titre)
+        self.topsectionap.pack(pady=10)
 
+        self.titreap = Label(self.topsectionap)
+        self.titreap.grid(row=0, column=0)
+        self.topLabelap = Label(self.titreap,
+                              text="APPLICATION DE RECHERCHE D'IMAGE PAR CONTENU: SIDICBIR",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabelap.pack()
+        self.topLabel1ap = Label(self.titreap,
+                              text="MASTER SIDI, FST ERRACHIDIA",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabel1ap.pack()
+        self.topLabel1ap = Label(self.titreap,
+                              text="-v.2020.01-",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabel1ap.pack()
+        self.topLabel2ap = Label(self.titreap,
+                              text="Développé par: Hassan ZEKKOURI",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabel2ap.pack()
 
-    
-    
+    def aide(self):
+        self.apUI = Toplevel(self.root)
+        self.apUI.geometry("760x50")
+        self.apUI.title("Aide?")
+        self.apUI.iconbitmap("sidicbir.ico")
 
-    
-    
+        self.width_titre = 75
+        self.bg_titre = "#4ECDC4"
+        self.bg_tab = "white"
+        self.bg_resoudre = 'green'
+        self.bg_effacer = '#FF6B6B'
+        self.fg_text = "green"
+        self.topsectionap = Canvas(self.apUI, bg=self.bg_titre)
+        self.topsectionap.pack(pady=10)
+
+        self.titreap = Label(self.topsectionap)
+        self.titreap.grid(row=0, column=0)
+        self.topLabelap = Label(self.titreap,
+                              text="Consulter: https://github.com/DgrinderHZ/SIDICBIR",
+                              bg=self.bg_titre,
+                              font=('Arial',12,'bold'),
+                              width=self.width_titre)
+        self.topLabelap.pack()
+
 
 
 if __name__ == '__main__':
