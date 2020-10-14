@@ -2340,17 +2340,20 @@ class CBIR_SIDI(Frame):
         imageFormat = self.var_typeImg.get()
         self.imgSize = (self.imgSizeVar.get(), self.imgSizeVar.get())
 
-        self.imgManager = ImageManager(self.root, DESC, DIST, descDist, self.imgSize, imgFolder, imageFormat, self.withIndexBase, self.radius.get())
+        if descDist[1] == self.BHATTACHARYYA or descDist[1] == self.CHISQRT and descDist[0] != self.HISTOGRAMME_RGB:
+            messagebox.showwarning("Message d'alert", "Les distances Chi-Square et Bhachattaryya vont avec l'histogramme RGB!")
+        else:
+            self.imgManager = ImageManager(self.root, DESC, DIST, descDist, self.imgSize, imgFolder, imageFormat, self.withIndexBase, self.radius.get())
 
-        self.imageList = self.imgManager.get_imageList()
-        self.photoList = self.imgManager.get_photoList()
-        self.indexBase = self.imgManager.getIndexBase()
+            self.imageList = self.imgManager.get_imageList()
+            self.photoList = self.imgManager.get_photoList()
+            self.indexBase = self.imgManager.getIndexBase()
 
-        self.xmax = self.imgManager.get_xmax() + 20
-        self.ymax = self.imgManager.get_ymax() + 10
-        self.currentPhotoList = self.imgManager.get_photoList()
-        self.currentImageList = self.imgManager.get_imageList()
-        self.totalPages = self.get_totalPages()
+            self.xmax = self.imgManager.get_xmax() + 20
+            self.ymax = self.imgManager.get_ymax() + 10
+            self.currentPhotoList = self.imgManager.get_photoList()
+            self.currentImageList = self.imgManager.get_imageList()
+            self.totalPages = self.get_totalPages()
 
     def find(self):
         queryFeature = []
