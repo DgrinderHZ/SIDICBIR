@@ -1879,7 +1879,7 @@ class CBIR_SIDI(Frame):
         instr = Label(self.resultsViewFrame,
                       bg=self.bgc,
                       fg='#aaa4bb',
-                      text="Click l'image pour selectioner.")
+                      text="Click l'image pour sélectionner.")
         instr.pack()
 
         self.resultPanel = LabelFrame(self.resultsViewFrame, bg=self.bgc)
