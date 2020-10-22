@@ -423,14 +423,18 @@ class FusionDescriptors():
     
     def getMomentsAndGabor(self, image, imgFile):
         combinedFeatures = []
-        combinedFeatures.extend(self.color.getMoments(image)) 
-        combinedFeatures.extend(self.texture.gabor_histogram(imgFile) )
+        c = self.color.getMoments(image)
+        g = self.texture.gabor_histogram(imgFile)
+        combinedFeatures.extend(self.normalize(c))
+        combinedFeatures.extend(self.normalize(g))
         return combinedFeatures
     
     def getMomentsAndZernike(self, image, gray):
         combinedFeatures = []
-        combinedFeatures.extend(self.color.getMoments(image)) 
-        combinedFeatures.extend(self.shape.getZernikeMoments(gray))
+        c = self.color.getMoments(image)
+        z = self.shape.getZernikeMoments(gray)
+        combinedFeatures.extend(self.normalize(c))
+        combinedFeatures.extend(self.normalize(z))
         return combinedFeatures
         
     def manhatanDistance(self, obj, query):
@@ -445,6 +449,16 @@ class FusionDescriptors():
             tsfd += abs(obj[i]-query[i])
 
         return (self.firstWeight * cfd + self.secondWeight * tsfd)
+
+    def normalize(self, vect):
+        """
+        Normalise
+        :param vect:
+        :return:
+        """
+        m, s = np.mean(vect), np.std(vect)
+        return [(x-m)/s for x in vect]
+
 
 
 #print(Descriptor.getAvgs([(2, 1, 3), (1,1,1)]))
