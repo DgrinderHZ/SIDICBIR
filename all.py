@@ -1554,10 +1554,10 @@ class CBIR_SIDI(Frame):
 
         self.desc_menu = Menu(self.view_menu, tearoff=False)
         self.view_menu.add_cascade(label="Descripteurs", menu=self.desc_menu)
-        self.desc_menu.add_command(label="Basé couleur", command=lambda: self.contentType(1))
-        self.desc_menu.add_command(label="Basé texture", command=lambda: self.contentType(2))
-        self.desc_menu.add_command(label="Basé forme", command=lambda: self.contentType(3))
-        self.desc_menu.add_command(label="Composé", command=lambda: self.contentType(4))
+        self.desc_menu.add_command(label="Basé sur la couleur", command=lambda: self.contentType(1))
+        self.desc_menu.add_command(label="Basé sur la texture", command=lambda: self.contentType(2))
+        self.desc_menu.add_command(label="Basé sur la forme", command=lambda: self.contentType(3))
+        self.desc_menu.add_command(label="Combinaison des descripteurs", command=lambda: self.contentType(4))
 
         self.mymenu.add_command(label="Aide?", command=lambda: self.aide())
         self.mymenu.add_command(label="À propos!", command=lambda: self.aPropos())
@@ -1566,7 +1566,7 @@ class CBIR_SIDI(Frame):
         self.upperFrame.pack()
 
         self.btn_color = Button(self.upperFrame,
-                                 text="Basé Couleur",
+                                 text="Basé sur la Couleur",
                                  font=('Arial',10,'bold'),
                                  width=41,
                                  pady=self.bth,
@@ -1578,7 +1578,7 @@ class CBIR_SIDI(Frame):
         self.btn_color.grid(row=0, column=0)
 
         self.btn_texture = Button(self.upperFrame,
-                                 text="Basé Texture",
+                                 text="Basé sur la Texture",
                                  font=('Arial',10,'bold'),
                                  width=40,
                                  pady=self.bth,
@@ -1590,7 +1590,7 @@ class CBIR_SIDI(Frame):
         self.btn_texture.grid(row=0, column=1)
 
         self.btn_shape = Button(self.upperFrame,
-                                 text="Basé Forme",
+                                 text="Basé sur la Forme",
                                  font=('Arial',10,'bold'),
                                  width=40,
                                  pady=self.bth,
