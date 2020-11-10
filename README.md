@@ -17,3 +17,10 @@ et installer les requirements:
 ```
 pip install -r requirements.txt
 ```
+Run
+```
+all.py (executable version)
+gui-main.py (could still contain some bugs)
+```
+
+I will clean the code later! :)
