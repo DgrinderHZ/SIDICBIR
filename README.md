@@ -1,19 +1,19 @@
 Salut!
 
 ______________________________
-La version actuelle nécessite 
+La version actuelle nÃ©cessite 
 le dossier 'default/' et le logo 'cidicbir.ico'
 pour fonctionner sans bugs!
 
 Aussi le lancement de l'executable lance une console
-pour afficher quelques infos d'éxecution!
+pour afficher quelques infos d'Ã©xecution!
 
 ______________________________
 
 Pour travailler avec le fichier code source, 
-il faut créer une environement virtuel (virtualenv)
-et installer les requierements:
+il faut crÃ©er une environement virtuel (virtualenv)
+et installer les requirements:
 
 ```
-pip install -r requierements.txt
+pip install -r requirements.txt
 ```
