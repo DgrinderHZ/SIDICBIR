@@ -12,6 +12,13 @@ ______________________________
 
 Pour travailler avec le fichier code source, 
 il faut créer une environement virtuel (virtualenv)
+```
+python venv -m img-pro
+```
+Activer votre venv
+```
+source img-pro/Scripts/activate
+```
 et installer les requirements:
 
 ```
