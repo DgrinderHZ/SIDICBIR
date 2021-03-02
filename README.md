@@ -11,7 +11,7 @@ pour afficher quelques infos d'éxecution!
 ______________________________
 
 Pour travailler avec le fichier code source, 
-il faut créer une environement virtuel (virtualenv)
+il faut créer un environement virtuel (virtualenv)
 ```
 python venv -m img-pro
 ```
